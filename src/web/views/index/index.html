@@ -1,0 +1,58 @@
+<el-container style="height: 800px; border: 1px solid #eee">
+
+    <el-header style="text-align: right; font-size: 16px">
+        <el-dropdown>
+            <i class="el-icon-setting" style="margin-right: 15px"></i>
+            <el-dropdown-menu slot="dropdown">
+                <el-dropdown-item>查看</el-dropdown-item>
+                <el-dropdown-item>新增</el-dropdown-item>
+                <el-dropdown-item>删除</el-dropdown-item>
+            </el-dropdown-menu>
+        </el-dropdown>
+        <span>王小虎</span>
+    </el-header>
+
+
+    <el-container>
+        <el-aside width="200px" style="background-color: rgb(238, 241, 246);height: 100%;">
+            <el-menu background-color=" rgb(238, 241, 246)">
+                <el-menu-item index="4">
+                    <i class="el-icon-setting"></i>
+                    <span slot="title">全部文件</span>
+                </el-menu-item>
+
+                <el-menu-item index="2">
+                    <i class="el-icon-setting"></i>
+                    <span slot="title">我的分享</span>
+                </el-menu-item>
+
+                <el-menu-item index="3">
+                    <i class="el-icon-setting"></i>
+                    <span slot="title">回收站</span>
+                </el-menu-item>
+
+
+            </el-menu>
+        </el-aside>
+
+
+        <el-main style="padding: 0px;">
+
+
+            <el-table ref="multipleTable" :data="tableData" height="500px" style="width: 100%;"
+                      @selection-change="handleSelectionChange">
+
+                <el-table-column type="selection" width="55">
+                </el-table-column>
+                <el-table-column prop="name" label="文件名">
+                </el-table-column>
+
+                <el-table-column prop="size" label="大小" width="120">
+                </el-table-column>
+
+                <el-table-column prop="date" label="修改日期" width="140">
+                </el-table-column>
+            </el-table>
+        </el-main>
+    </el-container>
+</el-container>

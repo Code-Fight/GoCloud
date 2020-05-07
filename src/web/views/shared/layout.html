@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang='en' class=''>
+<head>
+    <meta charset='UTF-8'>
+    <style>
+        @import url("/assets/css/index.css");
+        .el-header {
+            background-color: #B3C0D1;
+            color: #333;
+            line-height: 50px;
+        }
+        .el-aside {
+            color: #333;
+        }
+        [v-cloak]{
+            display: none;
+        }
+    </style>
+</head>
+
+<body style="margin: -1px;width: 100%;">
+<script src="/assets/js/vue.js"></script>
+<script src="/assets/js/index.js"></script>
+<script src="/assets/js/axios.min.js"></script>
+<div id="app" v-cloak>
+    {{yield}}
+</div>
+<script src="/assets/js/app.js"></script>
+</body>
+
+</html>
