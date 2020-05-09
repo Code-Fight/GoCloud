@@ -12,9 +12,9 @@ var vm =new Vue({
             this.pan=''
         },
         signIn() {
-            var user_name = document.getElementById('user_name').value
-            var eamil = document.getElementById('eamil').value
-            var password = document.getElementById('password').value
+            var user_name = document.getElementById('signup_user_name').value
+            var eamil = document.getElementById('signupeamil').value
+            var password = document.getElementById('signuppassword').value
 
 
 
@@ -41,8 +41,8 @@ var vm =new Vue({
         },
         signUp() {
 
-            var eamil = document.getElementById('signupeamil').value
-            var password = document.getElementById('signuppasswd').value
+            var eamil = document.getElementById('eamil').value
+            var password = document.getElementById('passwd').value
 
             if (eamil.length ==0 || password.length ==0){
                 vm.$message({

@@ -46,7 +46,7 @@ func GetResultRows(rows *sql.Rows) map[int]map[string]string {
 	//这里表示一行填充数据
 	scans := make([]interface{}, len(columns))
 	//这里scans引用vals，把数据填充到[]byte里
-	for k, _ := range vals {
+	for k := range vals {
 		scans[k] = &vals[k]
 	}
 	i := 0

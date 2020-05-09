@@ -4,6 +4,7 @@ import (
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/mvc"
 	"github.com/kataras/iris/v12/sessions"
+	"gocloud/datamodels"
 )
 
 type IndexController struct {
@@ -20,8 +21,16 @@ func (this *IndexController) Get() mvc.View{
 	}
 	this.Ctx.Application().Logger().Debug("index get")
 
+	user ,ok:=(sess.Get("user")).(*datamodels.UserModel)
+	if !ok{
+		this.Ctx.Application().Logger().Error("get user err by sesssion")
+	}
+
 	return mvc.View{
 		Name: "index/index.html",
+		Data: iris.Map{
+			"username":user.Username,
+		},
 	}
 }
 

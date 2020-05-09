@@ -1,4 +1,3 @@
-
 Vue.prototype.$axios = axios
 var vm =new Vue({
     el: '#app',
@@ -28,17 +27,33 @@ var vm =new Vue({
         getHeight(){
             this.tableheight=window.innerHeight-120+'px';  //获取浏览器高度减去顶部导航栏
         },
-        toggleSelection(rows) {
-            if (rows) {
-                rows.forEach(row => {
-                    this.$refs.multipleTable.toggleRowSelection(row);
-                });
-            } else {
-                this.$refs.multipleTable.clearSelection();
-            }
-        },
         handleSelectionChange(val) {
             this.multipleSelection = val;
+        },
+        UserCommandHandler(command){
+            switch (command) {
+                case 'exit':
+                    this.logout()
+                    break
+                case 'info':
+                    vm.$message({
+                        message: '这个功能还没做。。。。。。',
+                        type: 'success'
+                    });
+                    break
+            }
+
+        },
+        logout(){
+
+            this.$axios.get('/login/logout').then(function (response) {
+                if (response.data.Msg == 'OK'){
+
+                    window.location.href= "/login"
+                }
+            }).catch(function (err) {
+                console.log(err)
+            })
         }
     }
 })

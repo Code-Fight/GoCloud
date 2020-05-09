@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="utf-8">
+    <title>GoPan</title>
     <link rel="stylesheet" href="/assets/css/login.min.css">
     <link rel="stylesheet" href="/assets/css/login.css">
     <link rel="stylesheet" href="/assets/css/index.css">
@@ -17,9 +18,9 @@
             <div >
                 <h1>注册</h1>
 
-                <input type="text" id="user_name" placeholder="用户名">
-                <input type="email" id="eamil" placeholder="电子邮箱">
-                <input type="password" id="password" placeholder="密码">
+                <input type="text" id="signup_user_name" placeholder="用户名">
+                <input type="email" id="signupeamil" placeholder="电子邮箱">
+                <input type="password" id="signuppassword" placeholder="密码">
                 <button @click="signIn">注册</button>
             </div>
         </div>
@@ -28,8 +29,8 @@
                 <h1>登录</h1>
                
                
-                <input type="email" id="signupeamil" placeholder="电子邮箱">
-                <input type="password" id="signuppasswd" placeholder="密码">
+                <input type="email" value="admin@gopan.com" id="eamil" placeholder="电子邮箱">
+                <input type="password" value="111111" id="passwd" placeholder="密码">
                 <a href="#">忘记密码？</a>
                 <button @click="signUp">登录</button>
             </div>

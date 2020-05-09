@@ -18,7 +18,7 @@ type LoginController struct {
 
 func (this *LoginController) Get() mvc.View {
 	sess:=sessions.Get(this.Ctx)
-	if auth,err:=sess.GetBoolean("authenticated");auth||err==nil{
+	if auth,err:=sess.GetBoolean("authenticated");auth&&err==nil{
 		return mvc.View{
 			Name: "index/index.html",
 		}
@@ -28,6 +28,7 @@ func (this *LoginController) Get() mvc.View {
 		Name:"login/login.html",
 	}
 }
+
 // PostSignin the user signin
 func (this *LoginController) PostSignin()  {
 	data :=&datamodels.UserModel{}
@@ -89,3 +90,11 @@ func (this *LoginController) PostSignup()  {
 	this.Ctx.JSON("OK")
 }
 
+// GetLogout the user loguout
+func (this *LoginController) GetLogout() {
+	sessions.Get(this.Ctx).Set("authenticated",false)
+	this.Ctx.JSON(datamodels.RespModel{
+		Status: 0,
+		Msg: "OK",
+	})
+}

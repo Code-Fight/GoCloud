@@ -1,7 +1,7 @@
 <el-container style="height: 800px; border: 1px solid #eee">
 
     <el-header style="text-align: left; font-size: 16px">
-        <el-row  type="flex" >
+        <el-row type="flex">
             <el-col :span="1">
                 <i class="el-icon-eleme" style="font-size: 40px;line-height: 60px;padding-left: -10px">
 
@@ -14,7 +14,16 @@
             </el-col>
 
             <el-col style="text-align: right;line-height: 60px" :span="8">
-                <span>XXXX</span>
+
+                <el-dropdown  @command="UserCommandHandler">
+                      <span class="el-dropdown-link" style="color: white;font-size: 18px">
+                        {{.username}}<i class="el-icon-arrow-down el-icon--right"></i>
+                      </span>
+                    <el-dropdown-menu slot="dropdown">
+                        <el-dropdown-item command="info" icon="el-icon-user">个人中心</el-dropdown-item>
+                        <el-dropdown-item command="exit" icon="el-icon-close">退  出</el-dropdown-item>
+                    </el-dropdown-menu>
+                </el-dropdown>
             </el-col>
 
         </el-row>
@@ -50,12 +59,12 @@
 
             <el-row style="padding: 10px">
                 <el-col :span="24">
-                    <el-button type="primary" icon="el-icon-edit">上传</el-button>
+                    <el-button type="primary" icon="el-icon-upload2" >上传</el-button>
                 </el-col>
 
             </el-row>
 
-            <el-table  :height="tableheight"   ref="multipleTable" :data="tableData"  style="width: 100%;"
+            <el-table :height="tableheight" ref="multipleTable" :data="tableData" style="width: 100%;"
                       @selection-change="handleSelectionChange">
 
                 <el-table-column type="selection" width="55">
