@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="/assets/css/login.min.css">
+    <link rel="stylesheet" href="/assets/css/login.css">
+    <link rel="stylesheet" href="/assets/css/index.css">
+</head>
+
+
+<body>
+
+<div id="app"  v-cloak>
+    <div  :class="[dowebok, pan]" id="dowebok">
+        <div class="form-container sign-up-container">
+            <div >
+                <h1>注册</h1>
+
+                <input type="text" id="user_name" placeholder="用户名">
+                <input type="email" id="eamil" placeholder="电子邮箱">
+                <input type="password" id="password" placeholder="密码">
+                <button @click="signIn">注册</button>
+            </div>
+        </div>
+        <div class="form-container sign-in-container">
+            <div >
+                <h1>登录</h1>
+               
+               
+                <input type="email" id="signupeamil" placeholder="电子邮箱">
+                <input type="password" id="signuppasswd" placeholder="密码">
+                <a href="#">忘记密码？</a>
+                <button @click="signUp">登录</button>
+            </div>
+        </div>
+        <div class="overlay-container">
+            <div class="overlay">
+                <div class="overlay-panel overlay-left">
+                    <h1>已有帐号？</h1>
+                    <p>请使用您的帐号进行登录</p>
+                    <button class="ghost" @click="signUpButton">登录</button>
+                </div>
+                <div class="overlay-panel overlay-right">
+                    <h1>没有帐号？</h1>
+                    <p>立即注册加入我们，和我们一起开始旅程吧</p>
+                    <button class="ghost" @click="signInButton">注册</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+
+</body>
+<script src="/assets/js/vue.js"></script>
+<script src="/assets/js/index.js"></script>
+<script src="/assets/js/axios.min.js"></script>
+<script src="/assets/js/login.js"></script>
+
+</html>

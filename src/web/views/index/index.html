@@ -1,15 +1,25 @@
 <el-container style="height: 800px; border: 1px solid #eee">
 
-    <el-header style="text-align: right; font-size: 16px">
-        <el-dropdown>
-            <i class="el-icon-setting" style="margin-right: 15px"></i>
-            <el-dropdown-menu slot="dropdown">
-                <el-dropdown-item>查看</el-dropdown-item>
-                <el-dropdown-item>新增</el-dropdown-item>
-                <el-dropdown-item>删除</el-dropdown-item>
-            </el-dropdown-menu>
-        </el-dropdown>
-        <span>王小虎</span>
+    <el-header style="text-align: left; font-size: 16px">
+        <el-row  type="flex" >
+            <el-col :span="1">
+                <i class="el-icon-eleme" style="font-size: 40px;line-height: 60px;padding-left: -10px">
+
+                </i>
+
+            </el-col>
+            <el-col :span="15">
+                <span style="font-size: 28px;font-weight: 500;line-height: 62px;margin-left: -20px;">GoCloud</span>
+
+            </el-col>
+
+            <el-col style="text-align: right;line-height: 60px" :span="8">
+                <span>XXXX</span>
+            </el-col>
+
+        </el-row>
+
+
     </el-header>
 
 
@@ -38,8 +48,14 @@
 
         <el-main style="padding: 0px;">
 
+            <el-row style="padding: 10px">
+                <el-col :span="24">
+                    <el-button type="primary" icon="el-icon-edit">上传</el-button>
+                </el-col>
 
-            <el-table ref="multipleTable" :data="tableData" height="500px" style="width: 100%;"
+            </el-row>
+
+            <el-table  :height="tableheight"   ref="multipleTable" :data="tableData"  style="width: 100%;"
                       @selection-change="handleSelectionChange">
 
                 <el-table-column type="selection" width="55">

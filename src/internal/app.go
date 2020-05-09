@@ -2,11 +2,14 @@ package internal
 
 import (
 	"database/sql"
-	"github.com/kataras/iris"
-	"github.com/kataras/iris/mvc"
+	"github.com/kataras/iris/v12"
+	"github.com/kataras/iris/v12/mvc"
+	"github.com/kataras/iris/v12/sessions"
 	"gocloud/common"
+	"gocloud/dao"
 	"gocloud/services"
 	"gocloud/web/controllers"
+	"time"
 )
 
 func AppRun() {
@@ -20,22 +23,40 @@ func AppRun() {
 	app.RegisterView(tmplate)
 	app.RegisterView(tmplate_framework)
 
-	app.StaticWeb("/assets", "./web/assets")
+	app.HandleDir("/assets", "./web/assets")
 
 
 	app.OnAnyErrorCode(func(ctx iris.Context) {
 		ctx.ViewLayout("shared/layout.fw.html")
 		ctx.View("error/error.html")
 	})
+
+	sess := sessions.New(sessions.Config{
+		// Cookie string, the session's client cookie name, for example: "_session_id"
+		//
+		// Defaults to "irissessionid"
+		Cookie: "_session_id",
+		// it's time.Duration, from the time cookie is created, how long it can be alive?
+		// 0 means no expire, unlimited life.
+		// -1 means expire when browser closes
+		// or set a value, like 2 hours:
+		Expires: time.Hour * 2,
+		// if you want to invalid cookies on different subdomains
+		// of the same host, then enable it.
+		// Defaults to false.
+		DisableSubdomainPersistence: false,
+		// Allow getting the session value stored by the request from the same request.
+		AllowReclaim: true,
+	})
+
+	app.Use(sess.Handler())
+
 	db := getDb()
 	registerHandler(app,db)
 
+
 	// run web app
-	app.Run(
-		iris.Addr("localhost:8080"),
-		iris.WithoutServerError(iris.ErrServerClosed),
-		iris.WithOptimizations,
-	)
+	app.Listen(":8080")
 
 
 }
@@ -49,12 +70,21 @@ func getDb() *sql.DB{
 	return db
 }
 
-func registerHandler(app *iris.Application,db *sql.DB) {
+	func registerHandler(app *iris.Application,db *sql.DB) {
 
-	//productRepository := repositories.NewProductManager("product", db)
+	//Index
 	indexService := services.NewIndexService()
 	productParty := app.Party("/")
-	product := mvc.New(productParty)
-	product.Register( indexService)
-	product.Handle(new(controllers.IndexController))
+	index := mvc.New(productParty)
+	index.Register( indexService)
+	index.Handle(new(controllers.IndexController))
+
+	//Login
+	loginDao :=dao.NewUserDao("tbl_user",db)
+	loginService := services.NewLoginService(loginDao)
+	loginParty := app.Party("/login")
+	login := mvc.New(loginParty)
+	login.Register(loginService)
+	login.Handle(new(controllers.LoginController))
+
 }
