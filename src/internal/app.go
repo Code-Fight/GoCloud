@@ -87,4 +87,12 @@ func getDb() *sql.DB{
 	login.Register(loginService)
 	login.Handle(new(controllers.LoginController))
 
+	//File
+	fileDao :=dao.NewFileDao(db)
+	fileService :=services.NewFileService(fileDao)
+	file:=mvc.New(app.Party("/file"))
+	file.Register(fileService)
+	file.Handle(new(controllers.FileController))
+
+
 }

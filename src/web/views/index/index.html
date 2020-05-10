@@ -59,7 +59,10 @@
 
             <el-row style="padding: 10px">
                 <el-col :span="24">
-                    <el-button type="primary" icon="el-icon-upload2" >上传</el-button>
+                    <el-button type="primary" icon="el-icon-upload2" id="browseButton">上传</el-button>
+                    <el-button type="primary" plain>新建文件夹</el-button>
+
+
                 </el-col>
 
             </el-row>
@@ -72,10 +75,10 @@
                 <el-table-column prop="name" label="文件名">
                 </el-table-column>
 
-                <el-table-column prop="size" label="大小" width="120">
+                <el-table-column prop="size" label="大小" width="200">
                 </el-table-column>
 
-                <el-table-column prop="date" label="修改日期" width="140">
+                <el-table-column prop="date" label="修改日期" width="200">
                 </el-table-column>
             </el-table>
         </el-main>
