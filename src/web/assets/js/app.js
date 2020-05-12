@@ -64,6 +64,10 @@ var vm =new Vue({
         table_date_formatter(row, column){
             _obj  = row.LastUpdated.toString().split(':')
             return  row.LastUpdated.toString().replace(":"+_obj[_obj.length-1],"")
+        },
+        fileOnclick(data){
+            console.log(data.row)
+            //TODO:download
         }
     },
     created: function () {
