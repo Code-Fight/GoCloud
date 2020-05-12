@@ -6,10 +6,10 @@ import (
 )
 
 type IFileService interface {
-	GetFileMeta(filehash string) (file *datamodels.FileModel,err error)
-	OnFileUploadFinished(filehash string, filename string, filesize int64, fileaddr string) (succ bool,err error)
-	QueryUserFileMetas(username string, limit int) (userfile []datamodels.UserFile, err error)
-	OnUserFileUploadFinished(username, filehash, filename string, filesize int64) (succ bool,err error)
+	GetFileMeta(fileqetag string) (file *datamodels.FileModel,err error)
+	AddFile(fileqetag string, filename string, filesize int64, fileaddr string) (succ bool,err error)
+	QueryUserFils(username string) (userfile []datamodels.UserFile, err error)
+	AddUserFileRelation(username, fileqetag, filename,fileaddr string, filesize int64) (succ bool,err error)
 }
 
 type fileService struct {
@@ -20,15 +20,16 @@ func NewFileService(dao dao.IFileDao) IFileService {
 	return &fileService{dao}
 }
 
-func (this *fileService) GetFileMeta(filehash string) (file *datamodels.FileModel,err error){
-	return this.dao.SelectFile(filehash)
+func (this *fileService) GetFileMeta(fileqetag string) (file *datamodels.FileModel,err error){
+	return this.dao.SelectFile(fileqetag)
 }
-func (this *fileService) OnFileUploadFinished(filehash string, filename string, filesize int64, fileaddr string) (succ bool,err error){
-	return this.dao.InsertFile(filehash,filename,filesize,fileaddr)
+func (this *fileService) AddFile(fileqetag string, filename string, filesize int64, fileaddr string) (succ bool,err error){
+	return this.dao.InsertFile(fileqetag,filename,filesize,fileaddr)
 }
-func (this *fileService) QueryUserFileMetas(username string, limit int) (userfile []datamodels.UserFile, err error) {
-	return this.dao.SelectUserFileMetas(username,limit)
+func (this *fileService) QueryUserFils(username string) (userfile []datamodels.UserFile, err error) {
+	return this.dao.SelectUserFiles(username)
 }
-func (this *fileService) OnUserFileUploadFinished(username, filehash, filename string, filesize int64) (succ bool,err error){
-	return this.dao.InsertUserFile(username, filehash, filename ,filesize)
+func (this *fileService) AddUserFileRelation(username, fileqetag, filename,fileaddr string, filesize int64) (succ bool,err error){
+
+	return this.dao.InsertUserFile(username, fileqetag, filename ,filesize)
 }

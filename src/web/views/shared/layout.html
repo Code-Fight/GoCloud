@@ -24,20 +24,24 @@
             display: none;
         }
     </style>
+    <script src="/assets/js/vue.js"></script>
+    <script src="/assets/js/index.js"></script>
+    <script src="/assets/js/axios.min.js"></script>
+    <script src="/assets/libs/flow/flow.min.js"></script>
+    <script src="/assets/libs/qetag/sha1.min.js"></script>
+    <script src="/assets/libs/safari/arrayBuffer.js"></script>
+
 </head>
 
 <body style="margin: -1px;width: 100%;">
-<script src="/assets/js/vue.js"></script>
-<script src="/assets/js/index.js"></script>
-<script src="/assets/js/axios.min.js"></script>
-<script src="/assets/libs/flow/flow.min.js"></script>
-<script src="/assets/libs/qetag/sha1.min.js"></script>
 
 
-<div id="app" v-cloak>
+
+<div id="app" style="height: 100vh;display: flex" v-cloak>
     {{yield}}
 </div>
-<script src="/assets/js/app.js"></script>
 </body>
+<script src="/assets/js/app.js"></script>
+
 
 </html>

@@ -70,13 +70,13 @@ func getDb() *sql.DB{
 	return db
 }
 
-	func registerHandler(app *iris.Application,db *sql.DB) {
+func registerHandler(app *iris.Application,db *sql.DB) {
 
 	//Index
 	indexService := services.NewIndexService()
 	productParty := app.Party("/")
 	index := mvc.New(productParty)
-	index.Register( indexService)
+	index.Register(indexService)
 	index.Handle(new(controllers.IndexController))
 
 	//Login

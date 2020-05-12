@@ -1,10 +1,9 @@
 package datamodels
 
-import "database/sql"
-
 type FileModel struct {
-	FileHash string
-	FileName sql.NullString
-	FileSize sql.NullInt64
-	FileAddr sql.NullString
+	FileQetag string
+	FileName string
+	FileSize int64
+	Location string
+	UploadAt string
 }

@@ -12,6 +12,7 @@ var(
 func init() {
 	var mounterr error
 	Local_Storage_Mount,mounterr = os.Getwd()
+	Local_Storage_Mount +="/uploads/"
 	if mounterr !=nil{
 		panic("The Local_Storage_Mount ERROR")
 	}

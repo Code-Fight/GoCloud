@@ -1,36 +1,21 @@
 //the frontend chunksize must equal backend chunksize
-//TODO:
 var ChunkSize = 4*1024*1024
+
 var beginTime
 var sha1CostTime =0
 Vue.prototype.$axios = axios
 var vm =new Vue({
+    delimiters: ['$', '$'],//use the '$$' delimiters,because the '{{' confilct with 'iris' mvc
     el: '#app',
     data:{
-        tableheight:"",
+        tableheight:"auto",
         tableData: [],
         multipleSelection: []
 
     },
-    created: function () {
-        window.addEventListener('resize', this.getHeight);
-        this.getHeight()
-
-
-        // 请求后端 获取值
-        this.$axios.get('/index').then(function (response) {
-            console.log(response)
-        }).catch(function (err) {
-            console.log(err)
-        })
-    },
-    destroyed:function () {
-        window.removeEventListener('resize', this.getHeight);
-    },
-
     methods: {
         getHeight(){
-            this.tableheight=window.innerHeight-120+'px';  //获取浏览器高度减去顶部导航栏
+            this.tableheight=window.innerHeight-121.511+'px';  //获取浏览器高度减去顶部导航栏
         },
         handleSelectionChange(val) {
             this.multipleSelection = val;
@@ -59,15 +44,59 @@ var vm =new Vue({
             }).catch(function (err) {
                 console.log(err)
             })
+        },
+        table_silze_formatter(row, column){
+            if (parseInt(row.FileSize) == 0){
+                return ''
+            }else {
+                if (parseInt(row.FileSize)>=1024*1024*1024){
+                    Math.round( parseFloat(row.FileSize)/1024*1024*1024 * 10) / 10
+                    return  Math.round( parseFloat(row.FileSize)/1024*1024*1024 * 10) / 10+'G'
+                }else if (parseInt(row.FileSize) >= 1024*1024){
+                    return Math.round( parseFloat(row.FileSize)/1024*1024 * 10) / 10+'M'
+                }else if (parseInt(row.FileSize) >= 1024){
+                    return Math.round( parseFloat(row.FileSize)/1024 * 10) / 10+'K'
+                }else {
+                    return row.FileSize+'b'
+                }
+            }
+        },
+        table_date_formatter(row, column){
+            _obj  = row.LastUpdated.toString().split(':')
+            return  row.LastUpdated.toString().replace(":"+_obj[_obj.length-1],"")
         }
+    },
+    created: function () {
+        window.addEventListener('resize', this.getHeight);
+        this.getHeight()
+
+
+        // 请求后端 获取值
+        this.$axios.get('/file/userindexfiles').then(function (response) {
+            if (response.data.Status == 1){
+                vm.tableData = response.data.Data
+            }else {
+                alert(response.data.Msg)
+            }
+        }).catch(function (err) {
+            console.log(err)
+        })
+    },
+    destroyed:function () {
+        window.removeEventListener('resize', this.getHeight);
     }
 })
 
 
 var flow = new Flow({
-    target:'/api/photo/redeem-upload-token',
-    query:{upload_token:'my_token'},
-    chunkSize:ChunkSize
+    target:'/file/upload',
+    query:function (file, chunk, isTest) {
+        return{
+            'qetag':file.qetag
+        }
+    },
+    chunkSize:ChunkSize,
+    testChunks: false
 
 });
 // Flow.js isn't supported
@@ -83,15 +112,35 @@ flow.assignBrowse(document.getElementById('browseButton'));
 // flow.assignDrop(document.getElementById('dropTarget'));
 
 flow.on('fileAdded', function(file, event){
-    //console.log(file, event);
-    beginTime = +new Date();
+
     get_qetag_and_upload(file)
 });
-flow.on('fileSuccess', function(file,message){
-    console.log(file,message);
+flow.on('filesSubmitted', function(file, event){
+
+});
+
+flow.on('fileSuccess', function(file,message,chunk){
+    //console.log("upload succ:"+file)
+    var bodyFormData =new FormData()
+    bodyFormData.append("qetag",file.qetag)
+    bodyFormData.append("flowIdentifier",file.uniqueIdentifier)
+    bodyFormData.append("flowTotalChunks",file.chunks.length)
+    bodyFormData.append("fileSize",file.size)
+    bodyFormData.append("fileName",file.name)
+    bodyFormData.append("fileExt",file.name.split('.')[file.name.split('.').length-1])
+    axios({
+        method: 'post',
+        url: '/file/uploadfinshed',
+        data: bodyFormData,
+        headers: {'Content-Type': 'multipart/form-data'}
+    }). then(response=> {
+        alert(response.data.Msg)
+    })
+
+
 });
 flow.on('fileError', function(file, message){
-    console.log(file, message);
+    alert("UPLOAD ERROR:"+message)
 });
 
 
@@ -121,10 +170,10 @@ function get_qetag_and_upload(file) {
                 var bufferSize = buffer.size || buffer.length || buffer.byteLength;
                 blockCount = Math.ceil(bufferSize / blockSize);
                 for (var i = 0; i < blockCount; i++) {
-                    sha1beginTime = +new Date();
+                    //sha1beginTime = +new Date();
                     sha1String.push(shA1(buffer.slice(i * blockSize, (i + 1) * blockSize)));
-                    var sha1endTime = +new Date();
-                    sha1CostTime +=sha1endTime-sha1beginTime
+                    //var sha1endTime = +new Date();
+                    //sha1CostTime +=sha1endTime-sha1beginTime
 
 
                 }
@@ -139,7 +188,7 @@ function get_qetag_and_upload(file) {
             }else {
                 //to calc
                 calcEtag(sha1String,file)
-                console.log("sha1共用时"+sha1CostTime+"ms");
+                //console.log("sha1共用时"+sha1CostTime+"ms");
             }
         })
 
@@ -206,13 +255,27 @@ function calcEtag(sha1,file) {
         return _base64
     }
     var qetag = calcEtag()
-
-    uploadfile(qetag)
+    file.qetag = qetag
+    uploadfile(file)
 }
 
-function uploadfile(qetag) {
-    var endTime = +new Date();
-    console.log("用时共计"+(endTime-beginTime)+"ms");
-    console.log("upload qetag:"+qetag)
+function uploadfile(file) {
+    // var endTime = +new Date();
+    // console.log("用时共计"+(endTime-beginTime)+"ms");
+    // console.log("upload qetag:"+qetag)
+
+    if (!fileSecondsPass(file.qetag)){
+        flow.upload()
+    }else {
+        // markup and tip the file was uploaded success
+        // TODO
+    }
+
+    //
 }
+//fileSecondsPass if can seconds-pass return true,else false
+function fileSecondsPass() {
+    return false
+}
+
 

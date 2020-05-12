@@ -5,10 +5,12 @@ import (
 	"github.com/kataras/iris/v12/mvc"
 	"github.com/kataras/iris/v12/sessions"
 	"gocloud/datamodels"
+	"gocloud/services"
 )
 
 type IndexController struct {
 	Ctx iris.Context
+	IndexService services.IIndexService
 }
 
 func (this *IndexController) Get() mvc.View{
@@ -19,7 +21,7 @@ func (this *IndexController) Get() mvc.View{
 			Name: "login/login.html",
 		}
 	}
-	this.Ctx.Application().Logger().Debug("index get")
+	//this.Ctx.Application().Logger().Debug("index get")
 
 	user ,ok:=(sess.Get("user")).(*datamodels.UserModel)
 	if !ok{
@@ -34,9 +36,4 @@ func (this *IndexController) Get() mvc.View{
 	}
 }
 
-func (this *IndexController) GetIndex() {
-	//test
-	a :=[]int{1,2,3}
-	this.Ctx.JSON(a)
-}
 
