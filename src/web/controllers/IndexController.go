@@ -15,13 +15,12 @@ type IndexController struct {
 
 func (this *IndexController) Get() mvc.View{
 	sess:=sessions.Get(this.Ctx)
-	if auth,err:=sess.GetBoolean("authenticated");!auth||err!=nil{
-		return mvc.View{
-			Layout: "shared/layout.fw.html",
-			Name: "login/login.html",
-		}
-	}
-	//this.Ctx.Application().Logger().Debug("index get")
+	//if auth,err:=sess.GetBoolean("authenticated");!auth||err!=nil{
+	//	return mvc.View{
+	//		Layout: "shared/layout.fw.html",
+	//		Name: "login/login.html",
+	//	}
+	//}
 
 	user ,ok:=(sess.Get("user")).(*datamodels.UserModel)
 	if !ok{

@@ -1,4 +1,4 @@
-<el-container style="border: 1px solid #eee">
+<el-container style="border: 1px solid #eee"  >
 
     <el-header style="text-align: left; font-size: 16px">
         <el-row type="flex">
@@ -33,7 +33,7 @@
     </el-header>
 
 
-    <el-container>
+    <el-container >
         <el-aside width="200px" style="background-color: rgb(238, 241, 246);">
             <el-menu background-color=" rgb(238, 241, 246)">
                 <el-menu-item index="4">
@@ -56,11 +56,13 @@
         </el-aside>
 
 
-        <el-main style="padding: 0px;">
+        <el-main style="padding: 0px;" >
 
             <el-row style="padding: 10px">
                 <el-col :span="24">
-                    <el-button type="primary" icon="el-icon-upload" id="browseButton">上传</el-button>
+                    <el-button type="primary"  id="browseButton">
+                        <i style=";font-size: 17px" class="el-icon-upload"></i>
+                        上传</el-button>
                     <el-button type="primary" plain>新建文件夹</el-button>
 
 
@@ -70,13 +72,15 @@
 
             <el-table :height="tableheight" ref="multipleTable" :data="tableData" style="width: 100%;font-size: 13px"
                       @selection-change="handleSelectionChange"
+                      @row-contextmenu = "row_contextmenu"
+                      @row-click="mouseleftclick"
                       :default-sort = "{prop: 'FileName', order: 'descending'}"
                       >
 
                 <el-table-column type="selection" width="55">
                 </el-table-column>
 
-                <el-table-column sortable prop="FileName"  label="文件名">
+                <el-table-column sortable prop="FileName" label="文件名">
                     <template  slot-scope="temp">
                         <i style="font-size: 22px;color: #3a8ee6;position: absolute" v-bind:class="[temp.row.IsDir ? 'el-icon-folder' : 'el-icon-document']"></i>
                         <span class="filemouse" style="margin-left: 35px" @click="fileOnclick(temp)">$temp.row.FileName$</span>
@@ -90,6 +94,79 @@
                 <el-table-column sortable prop="LastUpdated" label="修改日期" width="300" :formatter="table_date_formatter">
                 </el-table-column>
             </el-table>
+            <el-button  @click="drawer = true"  style="position: fixed;bottom: 20px;right: 20px;font-size: 20px;font-weight: 700" type="primary"  icon="el-icon-upload2" circle></el-button>
         </el-main>
     </el-container>
 </el-container>
+
+<el-drawer
+        title="文件上传列表"
+        :visible.sync="drawer"
+        :with-Header="false">
+
+    <el-header style="text-align: left; font-size: 16px">
+        <el-row type="flex">
+            <el-col :span="20">
+                <i class="el-icon-paperclip" style="font-size: 20px;line-height: 60px">
+                </i>
+                <span style="font-size: 20px;line-height: 60px">  上传列表</span>
+
+            </el-col>
+
+
+        </el-row>
+
+
+    </el-header>
+
+    <el-main style="padding: 0px;">
+
+
+        <el-table height="100%" :data="uploadTableData" style="width: 99.9%;font-size: 13px"   >
+
+
+            <el-table-column sortable prop="name"  label="文件名">
+
+            </el-table-column>
+
+
+            <el-table-column label="状态" width="100px" >
+                <template slot-scope="scope">
+
+                    <el-progress style="position: relative;top: 5.6px;" :width = 40  :stroke-width=3   :status=scope.row.uploadstatus  type="circle" :percentage=scope.row.curprogress ></el-progress>
+                </template>
+            </el-table-column>
+
+            <el-table-column label="操作" width="120px" >
+                <template slot-scope="scope">
+
+{{/*                    <el-button v-if="scope.row.isUploading()" style="font-size: 12px" type="warning" icon="el-icon-video-pause"  @click="uploadPause(scope)" circle></el-button>*/}}
+{{/*                    <el-button v-else="scope.row.isUploading()" style="font-size: 12px" type="warning" icon="el-icon-caret-right"  @click="uploadPause(scope)" circle></el-button>*/}}
+
+                    <el-button  style="font-size: 12px" type="danger" icon="el-icon-delete" @click="uploadDelete(scope)" circle></el-button>
+                </template>
+            </el-table-column>
+
+        </el-table>
+
+    </el-main>
+</el-drawer>
+
+<div id="context-menu" class="context-menu" style="display: none">
+    <ul class="list" style="z-index: 100;  display: block;">
+
+        <li  @click="fileDownload" class="" style="display: block;">下载</li>
+        <li class="separate" ></li>
+
+
+        <li class="" style="display: block;">分享</li>
+        <li class="separate"></li>
+
+        <li class="" style="display: block;">复制到</li>
+        <li class="" style="display: block;">移动到</li>
+        <li class="separate" ></li>
+        <li  class="" style="display: block;">重命名</li>
+        <li  class="" style="display: block;">删除</li>
+        </li>
+    </ul>
+</div>

@@ -81,7 +81,11 @@ func DataToStructByTagSql(data map[string]string, obj interface{}) {
 		//获取对应字段类型
 		structFieldType := objValue.Field(i).Type()
 		//获取变量类型，也可以直接写"string类型"
+
 		val := reflect.ValueOf(value)
+		if !val.IsValid(){
+			continue
+		}
 		var err error
 		if structFieldType != val.Type() {
 			//类型转换

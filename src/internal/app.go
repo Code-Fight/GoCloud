@@ -9,6 +9,7 @@ import (
 	"gocloud/dao"
 	"gocloud/services"
 	"gocloud/web/controllers"
+	"gocloud/web/middleware"
 	"time"
 )
 
@@ -74,8 +75,9 @@ func registerHandler(app *iris.Application,db *sql.DB) {
 
 	//Index
 	indexService := services.NewIndexService()
-	productParty := app.Party("/")
-	index := mvc.New(productParty)
+	indexParty := app.Party("/")
+	indexParty.Use(middleware.NewAuth())
+	index := mvc.New(indexParty)
 	index.Register(indexService)
 	index.Handle(new(controllers.IndexController))
 
@@ -90,7 +92,7 @@ func registerHandler(app *iris.Application,db *sql.DB) {
 	//File
 	fileDao :=dao.NewFileDao(db)
 	fileService :=services.NewFileService(fileDao)
-	file:=mvc.New(app.Party("/file"))
+	file:=mvc.New(app.Party("/file",middleware.NewAuth()))
 	file.Register(fileService)
 	file.Handle(new(controllers.FileController))
 

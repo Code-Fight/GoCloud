@@ -10,10 +10,18 @@ var vm =new Vue({
     data:{
         tableheight:"auto",
         tableData: [],
-        multipleSelection: []
+        multipleSelection: [],
+        uploadTableData:[],
+        drawer:false,
+        curRightRow:{},
 
     },
     methods: {
+        mouseleftclick(){
+            var menu = document.querySelector("#context-menu");
+            menu.style.display = 'none';
+            this.curRightRow = {}
+        },
         getHeight(){
             this.tableheight=window.innerHeight-121.511+'px';  //获取浏览器高度减去顶部导航栏
         },
@@ -50,12 +58,12 @@ var vm =new Vue({
                 return ''
             }else {
                 if (parseInt(row.FileSize)>=1024*1024*1024){
-                    Math.round( parseFloat(row.FileSize)/1024*1024*1024 * 10) / 10
-                    return  Math.round( parseFloat(row.FileSize)/1024*1024*1024 * 10) / 10+'G'
+                    Math.round( parseFloat(row.FileSize)/(1024*1024*1024)* 10) / 10
+                    return  Math.round( parseFloat(row.FileSize)/(1024*1024*1024) * 10) / 10+'G'
                 }else if (parseInt(row.FileSize) >= 1024*1024){
-                    return Math.round( parseFloat(row.FileSize)/1024*1024 * 10) / 10+'M'
+                    return Math.round( parseFloat(row.FileSize)/(1024*1024) * 10) / 10+'M'
                 }else if (parseInt(row.FileSize) >= 1024){
-                    return Math.round( parseFloat(row.FileSize)/1024 * 10) / 10+'K'
+                    return Math.round( parseFloat(row.FileSize)/(1024) * 10) / 10+'K'
                 }else {
                     return row.FileSize+'b'
                 }
@@ -68,29 +76,104 @@ var vm =new Vue({
         fileOnclick(data){
             console.log(data.row)
             //TODO:download
+        },
+        uploadDelete(data){
+            data.row.cancel()
+            index =this.uploadTableData.indexOf(data.row)
+            this.uploadTableData.splice(index,1)
+
+        },
+        uploadPause(data){
+            if (data.row.isUploading()){
+                data.row.pause()
+            }else {
+                data.row.retry()
+            }
+        },
+        row_contextmenu(row, column, event) {
+            this.curRightRow = row
+            var menu = document.querySelector("#context-menu");
+            event.preventDefault();
+
+            menu.style.left = event.clientX + 'px';
+            menu.style.top = event.clientY + 'px';
+
+            menu.style.display = 'block';
+        },
+        fileDownload(){
+            document.querySelector("#context-menu").style.display = 'none';
+            try {
+                var elemIF = document.createElement("iframe");
+                elemIF.src = "/file/downloadfile?fileqetag="+this.curRightRow.FileQetag;
+                elemIF.style.display = "none";
+                document.body.appendChild(elemIF);
+            } catch (e) {
+                vm.$message({
+                    message: e,
+                    type: 'error'
+                });
+            }
+            //
+            // var bodyFormData =new FormData()
+            // bodyFormData.append("fileqetag",this.curRightRow.FileQetag)
+            // axios({
+            //     method:'post',
+            //     url:"/file/downloadfile",
+            //     data:bodyFormData,
+            //     responseType:'blob'
+            // }).then(resp=>{
+            //     if (resp.data.Status ==0){
+            //         vm.$message({
+            //             message: err,
+            //             type: resp.Msg
+            //         });
+            //     }
+            // }).catch(err=>{
+            //     vm.$message({
+            //         message: err,
+            //         type: 'error'
+            //     });
+            // })
+
         }
+
     },
     created: function () {
         window.addEventListener('resize', this.getHeight);
         this.getHeight()
+        GetFiles()
 
 
-        // 请求后端 获取值
-        this.$axios.get('/file/userindexfiles').then(function (response) {
-            if (response.data.Status == 1){
-                vm.tableData = response.data.Data
-            }else {
-                alert(response.data.Msg)
-            }
-        }).catch(function (err) {
-            console.log(err)
-        })
     },
     destroyed:function () {
         window.removeEventListener('resize', this.getHeight);
     }
 })
+//处理下载流
+function download(content,fileName){
+    const blob = new Blob([content]) //创建一个类文件对象：Blob对象表示一个不可变的、原始数据的类文件对象
+    const url = window.URL.createObjectURL(blob)//URL.createObjectURL(object)表示生成一个File对象或Blob对象
+    let dom = document.createElement('a')//设置一个隐藏的a标签，href为输出流，设置download
+    dom.style.display = 'none'
+    dom.href = url
+    dom.setAttribute('download',fileName)//指示浏览器下载url,而不是导航到它；因此将提示用户将其保存为本地文件
+    document.body.appendChild(dom)
+    dom.click()
+}
 
+
+function GetFiles() {
+// 请求后端 获取值
+    axios.get('/file/userindexfiles').then(function (response) {
+        if (response.data.Status == 1){
+            vm.tableData = response.data.Data
+        }else {
+            alert(response.data.Msg)
+        }
+    }).catch(function (err) {
+        console.log(err)
+    })
+}
 
 var flow = new Flow({
     target:'/file/upload',
@@ -100,7 +183,8 @@ var flow = new Flow({
         }
     },
     chunkSize:ChunkSize,
-    testChunks: false
+    testChunks: false,
+    headers:{'X-Requested-With':'XMLHttpRequest'}
 
 });
 // Flow.js isn't supported
@@ -116,7 +200,13 @@ flow.assignBrowse(document.getElementById('browseButton'));
 // flow.assignDrop(document.getElementById('dropTarget'));
 
 flow.on('fileAdded', function(file, event){
+    if (vm.$data.drawer !=true){
+        vm.$data.drawer =true
+    }
 
+    file.curprogress = 0
+    file.uploadstatus = ''
+    vm.uploadTableData.push(file)
     get_qetag_and_upload(file)
 });
 flow.on('filesSubmitted', function(file, event){
@@ -138,13 +228,32 @@ flow.on('fileSuccess', function(file,message,chunk){
         data: bodyFormData,
         headers: {'Content-Type': 'multipart/form-data'}
     }). then(response=> {
-        alert(response.data.Msg)
+        console.log(response.data)
+        if (parseInt(response.data.Status) ==1){
+            file.uploadstatus="success"
+            GetFiles()
+        }else {
+            file.uploadstatus="exception"
+        }
     })
 
 
 });
-flow.on('fileError', function(file, message){
-    alert("UPLOAD ERROR:"+message)
+
+flow.on('fileProgress',function (file, chunk) {
+    file.curprogress =Math.ceil( file.progress()*100)
+})
+
+flow.on('fileError', function(file, message,chunk){
+    if (401 === chunk.xhr.status) {
+        window.location = '/login';
+    }else {
+        vm.$message({
+            message: "error:"+chunk.xhr.status,
+            type: 'error'
+        });
+    }
+
 });
 
 

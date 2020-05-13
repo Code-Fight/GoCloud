@@ -41,8 +41,8 @@ func (this *fileDao) SelectFile(fileqetag string) (file *datamodels.FileModel,er
 		return
 	}
 	stmt, err := this.mysqlConn.Prepare(
-		"select file_sha1,file_addr,file_name,file_size from tbl_file " +
-			"where file_sha1=? and status=1 limit 1")
+		"select file_qetag,file_addr,file_name,file_size from tbl_file " +
+			"where file_qetag=? and status=1 limit 1")
 	if err != nil {
 		fmt.Println(err.Error())
 		return nil, err
@@ -60,7 +60,7 @@ func (this *fileDao) SelectFile(fileqetag string) (file *datamodels.FileModel,er
 	if len(result) == 0 {
 		return nil, err
 	}
-
+	file = &datamodels.FileModel{}
 	common.DataToStructByTagSql(result, file)
 
 	return file,nil

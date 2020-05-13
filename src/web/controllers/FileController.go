@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -178,6 +179,7 @@ func (this *FileController) GetUserindexfiles() {
 	user ,ok:=(sess.Get("user")).(*datamodels.UserModel)
 	if !ok{
 		this.Ctx.Application().Logger().Error("parse user err by sesssion")
+		return
 	}
 	files,err :=this.Service.QueryUserFils(user.Username)
 	if err!=nil{
@@ -194,3 +196,26 @@ func (this *FileController) GetUserindexfiles() {
 	})
 }
 
+func (this *FileController) GetDownloadfile() {
+
+	fileqetag := this.Ctx.Request().FormValue("fileqetag")
+	if len(strings.TrimSpace(fileqetag))==0{
+		this.Ctx.JSON(datamodels.RespModel{
+			Status: 0,
+			Msg: "upload error:invalid fileqetag",
+		})
+		return
+	}
+
+	file,err:=this.Service.GetFileMeta(fileqetag)
+	if err!=nil{
+		this.Ctx.JSON(datamodels.RespModel{
+			Status: 0,
+			Msg: "upload error:"+err.Error(),
+		})
+		return
+	}
+
+	//download
+	this.Ctx.SendFile(file.Location,file.FileName)
+}
