@@ -8,8 +8,8 @@ import (
 type IFileService interface {
 	GetFileMeta(fileqetag string) (file *datamodels.FileModel,err error)
 	AddFile(fileqetag string, filename string, filesize int64, fileaddr string) (succ bool,err error)
-	QueryUserFils(username string) (userfile []datamodels.UserFile, err error)
-	AddUserFileRelation(username, fileqetag, filename,fileaddr string, filesize int64) (succ bool,err error)
+	QueryUserFils(username string,parent_dir int) (userfile []datamodels.UserFile, err error)
+	AddUserFileRelation(username, fileqetag, filename,fileaddr string, filesize ,is_dir,parent_dir int64) (succ bool,err error)
 }
 
 type fileService struct {
@@ -26,10 +26,10 @@ func (this *fileService) GetFileMeta(fileqetag string) (file *datamodels.FileMod
 func (this *fileService) AddFile(fileqetag string, filename string, filesize int64, fileaddr string) (succ bool,err error){
 	return this.dao.InsertFile(fileqetag,filename,filesize,fileaddr)
 }
-func (this *fileService) QueryUserFils(username string) (userfile []datamodels.UserFile, err error) {
-	return this.dao.SelectUserFiles(username)
+func (this *fileService) QueryUserFils(username string,parent_dir int) (userfile []datamodels.UserFile, err error) {
+	return this.dao.SelectUserFiles(username,parent_dir)
 }
-func (this *fileService) AddUserFileRelation(username, fileqetag, filename,fileaddr string, filesize int64) (succ bool,err error){
+func (this *fileService) AddUserFileRelation(username, fileqetag, filename,fileaddr string, filesize,is_dir,parent_dir int64) (succ bool,err error){
 
-	return this.dao.InsertUserFile(username, fileqetag, filename ,filesize)
+	return this.dao.InsertUserFile(username, fileqetag, filename ,filesize,is_dir,parent_dir)
 }

@@ -14,6 +14,9 @@ var vm =new Vue({
         uploadTableData:[],
         drawer:false,
         curRightRow:{},
+        parentDir:0,
+        dialogFormVisible:false,
+        dir_name:"",
 
     },
     methods: {
@@ -74,8 +77,14 @@ var vm =new Vue({
             return  row.LastUpdated.toString().replace(":"+_obj[_obj.length-1],"")
         },
         fileOnclick(data){
-            console.log(data.row)
-            //TODO:download
+           if (data.row.IsDir){
+                //go in dir
+               this.parentDir = data.row.ID
+
+               GetFiles(data.row.ID)
+           }else {
+               //maybe pre-show file?
+           }
         },
         uploadDelete(data){
             data.row.cancel()
@@ -94,9 +103,13 @@ var vm =new Vue({
             this.curRightRow = row
             var menu = document.querySelector("#context-menu");
             event.preventDefault();
-
+            if (event.clientY+171 > window.innerHeight){
+                menu.style.top = event.clientY -171 + 'px';
+            }else {
+                menu.style.top = event.clientY  + 'px';
+            }
             menu.style.left = event.clientX + 'px';
-            menu.style.top = event.clientY + 'px';
+
 
             menu.style.display = 'block';
         },
@@ -104,7 +117,7 @@ var vm =new Vue({
             document.querySelector("#context-menu").style.display = 'none';
             try {
                 var elemIF = document.createElement("iframe");
-                elemIF.src = "/file/downloadfile?fileqetag="+this.curRightRow.FileQetag;
+                elemIF.src = "/file/downloadfile/"+this.curRightRow.FileName+"?fileqetag="+this.curRightRow.FileQetag;
                 elemIF.style.display = "none";
                 document.body.appendChild(elemIF);
             } catch (e) {
@@ -113,35 +126,30 @@ var vm =new Vue({
                     type: 'error'
                 });
             }
-            //
-            // var bodyFormData =new FormData()
-            // bodyFormData.append("fileqetag",this.curRightRow.FileQetag)
-            // axios({
-            //     method:'post',
-            //     url:"/file/downloadfile",
-            //     data:bodyFormData,
-            //     responseType:'blob'
-            // }).then(resp=>{
-            //     if (resp.data.Status ==0){
-            //         vm.$message({
-            //             message: err,
-            //             type: resp.Msg
-            //         });
-            //     }
-            // }).catch(err=>{
-            //     vm.$message({
-            //         message: err,
-            //         type: 'error'
-            //     });
-            // })
+        },
+        OnCreateDir() {
+            this.dialogFormVisible = false
+           // alert(this.dir_name)
 
+            this.$axios.get("/file/createdir/"+vm.$data.parentDir+"/"+vm.$data.dir_name).
+            then(resp=>{
+                if (resp.data.Status ==1){
+                    vm.$data.dir_name = ""
+                    GetFiles(vm.$data.parentDir)
+                }else {
+                    vm.$message({
+                        message: resp.data.Msg,
+                        type: 'error'
+                    });
+                }
+            })
         }
 
     },
     created: function () {
         window.addEventListener('resize', this.getHeight);
         this.getHeight()
-        GetFiles()
+        GetFiles(0)
 
 
     },
@@ -149,7 +157,8 @@ var vm =new Vue({
         window.removeEventListener('resize', this.getHeight);
     }
 })
-//处理下载流
+
+// file download
 function download(content,fileName){
     const blob = new Blob([content]) //创建一个类文件对象：Blob对象表示一个不可变的、原始数据的类文件对象
     const url = window.URL.createObjectURL(blob)//URL.createObjectURL(object)表示生成一个File对象或Blob对象
@@ -161,11 +170,15 @@ function download(content,fileName){
     dom.click()
 }
 
-
-function GetFiles() {
-// 请求后端 获取值
-    axios.get('/file/userindexfiles').then(function (response) {
+// get the use file by p
+function GetFiles(p) {
+    p = p||(vm?vm.$data.parentDir:0)||0
+    axios.get('/file/userindexfiles?p='+p).then(function (response) {
         if (response.data.Status == 1){
+            if (!response.data.Data){
+                vm.tableData=[]
+                return
+            }
             vm.tableData = response.data.Data
         }else {
             alert(response.data.Msg)
@@ -174,6 +187,13 @@ function GetFiles() {
         console.log(err)
     })
 }
+
+
+
+
+
+
+
 
 var flow = new Flow({
     target:'/file/upload',
@@ -187,6 +207,7 @@ var flow = new Flow({
     headers:{'X-Requested-With':'XMLHttpRequest'}
 
 });
+
 // Flow.js isn't supported
 if(!flow.support) {
     vm.$message({
@@ -197,7 +218,7 @@ if(!flow.support) {
 }
 
 flow.assignBrowse(document.getElementById('browseButton'));
-// flow.assignDrop(document.getElementById('dropTarget'));
+
 
 flow.on('fileAdded', function(file, event){
     if (vm.$data.drawer !=true){
@@ -222,6 +243,7 @@ flow.on('fileSuccess', function(file,message,chunk){
     bodyFormData.append("fileSize",file.size)
     bodyFormData.append("fileName",file.name)
     bodyFormData.append("fileExt",file.name.split('.')[file.name.split('.').length-1])
+    bodyFormData.append("parentDir",vm.$data.parentDir)
     axios({
         method: 'post',
         url: '/file/uploadfinshed',

@@ -12,8 +12,8 @@ type IFileDao interface {
 	Conn() error
 	SelectFile(fileqetag string) (file *datamodels.FileModel,err error)
 	InsertFile(fileqetag string, filename string, filesize int64, fileaddr string) (succ bool,err error)
-	SelectUserFiles(username string) (userfile []datamodels.UserFile, err error)
-	InsertUserFile(username, fileqetag, filename string, filesize int64) (succ bool,err error)
+	SelectUserFiles(username string,parent_dir int) (userfile []datamodels.UserFile, err error)
+	InsertUserFile(username, fileqetag, filename string, filesize,is_dir,parent_dir int64) (succ bool,err error)
 }
 
 type fileDao struct {
@@ -41,7 +41,7 @@ func (this *fileDao) SelectFile(fileqetag string) (file *datamodels.FileModel,er
 		return
 	}
 	stmt, err := this.mysqlConn.Prepare(
-		"select file_qetag,file_addr,file_name,file_size from tbl_file " +
+		"select file_qetag,file_addr,file_name,file_size,update_at from tbl_file " +
 			"where file_qetag=? and status=1 limit 1")
 	if err != nil {
 		fmt.Println(err.Error())
@@ -67,19 +67,19 @@ func (this *fileDao) SelectFile(fileqetag string) (file *datamodels.FileModel,er
 }
 
 // InsertUserFile : Add the file info to tbl_user_file
-func (this *fileDao) InsertUserFile(username, fileqetag, filename string, filesize int64) (succ bool,err error) {
+func (this *fileDao) InsertUserFile(username, fileqetag, filename string, filesize,is_dir,parent_dir int64) (succ bool,err error) {
 	if err = this.Conn(); err != nil {
 		return
 	}
 	stmt, err := this.mysqlConn.Prepare(
 		"insert ignore into tbl_user_file (`user_name`,`file_qetag`,`file_name`," +
-			"`file_size`,`upload_at`) values (?,?,?,?,?)")
+			"`file_size`,`upload_at`,`is_dir`,`parent_dir`) values (?,?,?,?,?,?,?)")
 	if err != nil {
 		return false,err
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(username, fileqetag, filename, filesize, time.Now())
+	_, err = stmt.Exec(username, fileqetag, filename, filesize, time.Now(),is_dir,parent_dir)
 	if err != nil {
 		return false,err
 	}
@@ -87,19 +87,19 @@ func (this *fileDao) InsertUserFile(username, fileqetag, filename string, filesi
 }
 
 // SelectUserFiles : Get the user  first page files
-func (this *fileDao) SelectUserFiles(username string) (userfile []datamodels.UserFile, err error) {
+func (this *fileDao) SelectUserFiles(username string,parent_dir int) (userfile []datamodels.UserFile, err error) {
 	if err = this.Conn(); err != nil {
 		return
 	}
 	stmt, err := this.mysqlConn.Prepare(
-		"select file_qetag,file_name,file_size,upload_at," +
-			"last_update,is_dir,parent_dir  from tbl_user_file where user_name=? and parent_dir =0")
+		"select id, file_qetag,file_name,file_size,upload_at," +
+			"last_update,is_dir,parent_dir  from tbl_user_file where user_name=? and parent_dir =? ")
 	if err != nil {
 		return nil, err
 	}
 	defer stmt.Close()
 
-	rows, err := stmt.Query(username)
+	rows, err := stmt.Query(username,parent_dir)
 	if err != nil {
 		return nil, err
 	}

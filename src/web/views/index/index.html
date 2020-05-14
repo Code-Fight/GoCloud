@@ -63,12 +63,23 @@
                     <el-button type="primary"  id="browseButton">
                         <i style=";font-size: 17px" class="el-icon-upload"></i>
                         上传</el-button>
-                    <el-button type="primary" plain>新建文件夹</el-button>
+                    <el-button type="primary" @click="dialogFormVisible = true" plain>新建文件夹</el-button>
 
 
                 </el-col>
 
             </el-row>
+
+
+            <el-dialog title="目录名称" :close-on-click-modal=false width="400px" :visible.sync="dialogFormVisible">
+                <el-form >
+                    <el-input v-model="dir_name" autocomplete="off"></el-input>
+                </el-form>
+                <div slot="footer" class="dialog-footer">
+                    <el-button @click="dialogFormVisible = false">取 消</el-button>
+                    <el-button type="primary" @click="OnCreateDir">确 定</el-button>
+                </div>
+            </el-dialog>
 
             <el-table :height="tableheight" ref="multipleTable" :data="tableData" style="width: 100%;font-size: 13px"
                       @selection-change="handleSelectionChange"
