@@ -2,6 +2,7 @@ package dao
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"gocloud/common"
 	"gocloud/datamodels"
@@ -12,8 +13,13 @@ type IFileDao interface {
 	Conn() error
 	SelectFile(fileqetag string) (file *datamodels.FileModel,err error)
 	InsertFile(fileqetag string, filename string, filesize int64, fileaddr string) (succ bool,err error)
-	SelectUserFiles(username string,parent_dir int) (userfile []datamodels.UserFile, err error)
+	SelectUserFiles(username string,parent_dir,status int64) (userfile []datamodels.UserFile, err error)
+	SelectUserDirs(username string) (userfile []datamodels.UserFile, err error)
+	SelectUserFilesByQetag(username,fileqetag string,parent_dir,status int64) (userfile *datamodels.UserFile, err error)
 	InsertUserFile(username, fileqetag, filename string, filesize,is_dir,parent_dir int64) (succ bool,err error)
+	DeleteUserFile(username, fileqetag string)(succ bool,err error)
+	UpdateUserFileStatus(status,id int64)(succ bool,err error)
+	UpdateUserFileName(id int64,name string)(succ bool,err error)
 }
 
 type fileDao struct {
@@ -87,19 +93,19 @@ func (this *fileDao) InsertUserFile(username, fileqetag, filename string, filesi
 }
 
 // SelectUserFiles : Get the user  first page files
-func (this *fileDao) SelectUserFiles(username string,parent_dir int) (userfile []datamodels.UserFile, err error) {
+func (this *fileDao) SelectUserFiles(username string,parent_dir,status int64) (userfile []datamodels.UserFile, err error) {
 	if err = this.Conn(); err != nil {
 		return
 	}
 	stmt, err := this.mysqlConn.Prepare(
 		"select id, file_qetag,file_name,file_size,upload_at," +
-			"last_update,is_dir,parent_dir  from tbl_user_file where user_name=? and parent_dir =? ")
+			"last_update,is_dir,parent_dir  from tbl_user_file where user_name=? and parent_dir =? and status=?")
 	if err != nil {
 		return nil, err
 	}
 	defer stmt.Close()
 
-	rows, err := stmt.Query(username,parent_dir)
+	rows, err := stmt.Query(username,parent_dir,status)
 	if err != nil {
 		return nil, err
 	}
@@ -143,4 +149,107 @@ func (this *fileDao) InsertFile(fileqetag string, filename string, filesize int6
 		return true,err
 	}
 	return false,err
+}
+
+func (this *fileDao) DeleteUserFile(username, fileqetag string)(succ bool,err error){
+
+	return false,errors.New("didn't impl")
+}
+
+func (this *fileDao) SelectUserFilesByQetag(username,fileqetag string,parent_dir,status int64) (userfile *datamodels.UserFile, err error){
+	if err = this.Conn(); err != nil {
+		return
+	}
+	stmt, err := this.mysqlConn.Prepare(
+		"select id, file_qetag,file_name,file_size,upload_at," +
+			"last_update,is_dir,parent_dir  from tbl_user_file where user_name=? and parent_dir =? and status=? and file_qetag=?")
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(username,parent_dir,status,fileqetag)
+	if err != nil {
+		return nil, err
+	}
+
+	result := common.GetResultRow(rows)
+	if len(result) == 0 {
+		return nil, err
+	}
+	userfile =&datamodels.UserFile{}
+	common.DataToStructByTagSql(result,userfile)
+
+	return userfile, nil
+}
+
+
+func (this *fileDao) UpdateUserFileStatus(status,id int64)(succ bool,err error){
+	if err = this.Conn(); err != nil {
+		return
+	}
+	stmt, err :=this.mysqlConn.Prepare("update tbl_user_file set status = ?,last_update=? where" +
+		" id=? ")
+	if err != nil {
+		fmt.Println("Failed to prepare statement,err:" + err.Error())
+		return false,err
+	}
+	defer stmt.Close()
+	_, err = stmt.Exec(status,time.Now(), id)
+	if err != nil {
+		fmt.Println(err.Error())
+		return false,err
+	}
+
+	return true,nil
+}
+
+func (this *fileDao) UpdateUserFileName(id int64,name string)(succ bool,err error){
+	if err = this.Conn(); err != nil {
+		return
+	}
+	stmt, err :=this.mysqlConn.Prepare("update tbl_user_file set file_name = ?,last_update=? where" +
+		" id=? ")
+	if err != nil {
+		fmt.Println("Failed to prepare statement,err:" + err.Error())
+		return false,err
+	}
+	defer stmt.Close()
+	_, err = stmt.Exec(name,time.Now(), id)
+	if err != nil {
+		fmt.Println(err.Error())
+		return false,err
+	}
+
+	return true,nil
+}
+
+func (this *fileDao) SelectUserDirs(username string) (userfile []datamodels.UserFile, err error){
+	if err = this.Conn(); err != nil {
+		return
+	}
+	stmt, err := this.mysqlConn.Prepare(
+		"select id, file_qetag,file_name from tbl_user_file where user_name=? status=1 and is_dir=1")
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+	rows, err := stmt.Query(username)
+	if err != nil {
+		return nil, err
+	}
+
+	result := common.GetResultRows(rows)
+	if len(result) == 0 {
+		return nil, err
+	}
+
+	for _,v :=range result{
+		temp :=&datamodels.UserFile{}
+
+		common.DataToStructByTagSql(v,temp)
+		userfile = append(userfile, *temp)
+	}
+
+	return userfile, nil
 }

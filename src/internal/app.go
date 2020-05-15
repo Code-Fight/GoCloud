@@ -16,6 +16,7 @@ import (
 func AppRun() {
 	//1. create iris instance
 	app := iris.New()
+	app.Favicon("./web/assets/img/fav.ico")
 	//2. set logger level
 	app.Logger().SetLevel("debug")
 	//3. register view

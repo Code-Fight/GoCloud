@@ -180,7 +180,7 @@ func (this *FileController) GetUserindexfiles() {
 
 	parents, _ := strconv.ParseInt(this.Ctx.Request().FormValue("p"), 10, 0)
 
-	files, err := this.Service.QueryUserFils(user.Username, int(parents))
+	files, err := this.Service.QueryUserFils(user.Username, parents,1)
 	if err != nil {
 		this.Ctx.JSON(datamodels.RespModel{
 			Status: 0,
@@ -233,7 +233,9 @@ func (this *FileController) GetDownloadfileBy(filename string) {
 		})
 		return
 	}
-	http.ServeContent(this.Ctx.ResponseWriter(), this.Ctx.Request(), file.FileName, _t, f)
+	this.Ctx.ResponseWriter().Header().Set("Content-Disposition","attachment; filename=\""+filename+"\"")
+
+	http.ServeContent(this.Ctx.ResponseWriter(), this.Ctx.Request(), "", _t, f)
 	//this.Ctx.SendFile(file.Location,file.FileName)
 }
 
@@ -252,7 +254,7 @@ func (this *FileController) GetCreatedirBy(parent_dir int,dir_name string) {
 	// it is a simple method to generate a 'dir sha1',
 	// but I think it's enough
 	// because the dir_name is unique
-	dir_sha1 :=common.Sha1([]byte(user.Username+dir_name))
+	dir_sha1 :=common.Sha1([]byte(user.Username+dir_name+strconv.Itoa(parent_dir)))
 	succ, err := this.Service.AddUserFileRelation(user.Username, dir_sha1, dir_name, "", 0, 1,int64(parent_dir))
 	if !succ {
 		this.Ctx.JSON(datamodels.RespModel{
@@ -265,4 +267,96 @@ func (this *FileController) GetCreatedirBy(parent_dir int,dir_name string) {
 		Status: 1,
 		Msg:    "OK",
 	})
+}
+
+func (this *FileController) GetDeleteBy(qetag string,parent_id int64) {
+	sess := sessions.Get(this.Ctx)
+
+	user, ok := (sess.Get("user")).(*datamodels.UserModel)
+	if !ok {
+		this.Ctx.Application().Logger().Error("parse user err by sesssion")
+		return
+	}
+	succ,err:=this.Service.DeleteFile(user.Username,qetag,parent_id)
+	if err !=nil||!succ{
+		this.Ctx.JSON(datamodels.RespModel{
+			Status: 0,
+			Msg:    err.Error(),
+		})
+		return
+	}
+	this.Ctx.JSON(datamodels.RespModel{
+		Status: 1,
+		Msg:    "OK",
+	})
+}
+
+func (this *FileController) PostFilesecondspass()  {
+	sess := sessions.Get(this.Ctx)
+
+	user, ok := (sess.Get("user")).(*datamodels.UserModel)
+	if !ok {
+		this.Ctx.Application().Logger().Error("parse user err by sesssion")
+	}
+
+	qetag := this.Ctx.FormValue("qetag")
+	parent_dir, _ := strconv.ParseInt(this.Ctx.FormValue("parentDir"), 10, 0)
+	fileName := this.Ctx.Request().FormValue("fileName")
+
+	meta,err :=this.Service.GetFileMeta(qetag)
+	if err!=nil{
+		this.Ctx.JSON(datamodels.RespModel{
+			Status: 0,
+			Msg:    err.Error(),
+		})
+		return
+	}
+
+	if meta==nil{
+		//don't hava same file,need upload file
+		this.Ctx.JSON(datamodels.RespModel{
+			Status: 0,
+			Msg:    "don't hava same file",
+		})
+		return
+	}
+
+	succ,err :=this.Service.AddUserFileRelation(user.Username,qetag,fileName,meta.Location,meta.FileSize,0,parent_dir)
+	if err!=nil || !succ{
+		this.Ctx.JSON(datamodels.RespModel{
+			Status: 0,
+			Msg:    err.Error(),
+		})
+		return
+	}
+	this.Ctx.JSON(datamodels.RespModel{
+		Status: 1,
+		Msg:    "OK",
+	})
+
+
+}
+
+func (this *FileController) GetRenamefileBy(id int64, name string) {
+	if id<=0{
+		this.Ctx.JSON(datamodels.RespModel{
+			Status: 0,
+			Msg:    "the id error",
+		})
+		return
+	}
+
+	succ,err := this.Service.UpdateUserFileName(id,name)
+	if err!=nil ||!succ{
+		this.Ctx.JSON(datamodels.RespModel{
+			Status: 0,
+			Msg:    err.Error(),
+		})
+		return
+	}
+	this.Ctx.JSON(datamodels.RespModel{
+		Status: 1,
+		Msg:    "OK",
+	})
+
 }

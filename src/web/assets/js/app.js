@@ -17,6 +17,13 @@ var vm =new Vue({
         parentDir:0,
         dialogFormVisible:false,
         dir_name:"",
+        DeletedialogVisible:false,
+        NavArray:[{
+            "ID":0,
+            "FileName":"首页"
+        }],
+        newFileName:"",
+        newFileNameDialogFormVisible:false
 
     },
     methods: {
@@ -80,11 +87,67 @@ var vm =new Vue({
            if (data.row.IsDir){
                 //go in dir
                this.parentDir = data.row.ID
-
+               vm.NavArray.push(data.row)
                GetFiles(data.row.ID)
            }else {
                //maybe pre-show file?
            }
+        },
+        preDir(data){
+                //go in dir
+            if (data.ID ==0){
+                this.NavArray =[{
+                    "ID":0,
+                    "FileName":"首页"
+                }]
+                this.parentDir = 0
+            }else if (this.NavArray.length==1){
+                this.parentDir = 0
+                return;
+            }else {
+                index =vm.NavArray.indexOf(data)
+                if (index<0){
+                    return
+                }
+                this.parentDir = vm.NavArray[index].ID
+
+                vm.NavArray.splice(index+1,(vm.NavArray.length)-index)
+
+            }
+            GetFiles(this.parentDir)
+
+
+
+
+        },
+        allfile(index,indexPath){
+
+            if(index==1){
+                this.NavArray =[{
+                    "ID":0,
+                    "FileName":"首页"
+                }]
+                this.parentDir = 0
+                GetFiles(0)
+            }
+
+
+        },
+        fileDeleteConfirm(){
+            RightMenuDisplayNone()
+            this.DeletedialogVisible=true
+        },
+        fileDelete(){
+            RightMenuDisplayNone()
+            this.DeletedialogVisible=false
+            this.$axios.get("/file/delete/"+this.curRightRow.FileQetag+"/"+this.curRightRow.ID
+            ).then(resp=>{
+                if (resp.data.Status == 1){
+                    GetFiles(this.curRightRow.ParentDir)
+                }else {
+                   ErrMsg(resp.data.Msg)
+                }
+            })
         },
         uploadDelete(data){
             data.row.cancel()
@@ -114,17 +177,14 @@ var vm =new Vue({
             menu.style.display = 'block';
         },
         fileDownload(){
-            document.querySelector("#context-menu").style.display = 'none';
+            RightMenuDisplayNone()
             try {
                 var elemIF = document.createElement("iframe");
                 elemIF.src = "/file/downloadfile/"+this.curRightRow.FileName+"?fileqetag="+this.curRightRow.FileQetag;
                 elemIF.style.display = "none";
                 document.body.appendChild(elemIF);
             } catch (e) {
-                vm.$message({
-                    message: e,
-                    type: 'error'
-                });
+                ErrMsg(e)
             }
         },
         OnCreateDir() {
@@ -137,13 +197,26 @@ var vm =new Vue({
                     vm.$data.dir_name = ""
                     GetFiles(vm.$data.parentDir)
                 }else {
-                    vm.$message({
-                        message: resp.data.Msg,
-                        type: 'error'
-                    });
+                    ErrMsg(resp.data.Msg)
                 }
             })
-        }
+        },
+        preOnRenameFile(){
+            this.newFileNameDialogFormVisible = true
+            RightMenuDisplayNone()
+        },
+        OnRenameFile() {
+            this.newFileNameDialogFormVisible = false
+            this.$axios.get("/file/renamefile/"+vm.$data.curRightRow.ID+"/"+vm.$data.newFileName).
+            then(resp=>{
+                if (resp.data.Status ==1){
+                    vm.$data.newFileName = ""
+                    GetFiles(vm.$data.parentDir)
+                }else {
+                    ErrMsg(resp.data.Msg)
+                }
+            })
+        },
 
     },
     created: function () {
@@ -179,6 +252,7 @@ function GetFiles(p) {
                 vm.tableData=[]
                 return
             }
+
             vm.tableData = response.data.Data
         }else {
             alert(response.data.Msg)
@@ -188,8 +262,17 @@ function GetFiles(p) {
     })
 }
 
+function RightMenuDisplayNone() {
+    document.querySelector("#context-menu").style.display = 'none';
+}
 
-
+function ErrMsg(msg) {
+    vm.$message({
+        message: msg,
+        type: 'error',
+        offset: 100
+    });
+}
 
 
 
@@ -210,10 +293,8 @@ var flow = new Flow({
 
 // Flow.js isn't supported
 if(!flow.support) {
-    vm.$message({
-        message: '上传插件不支持，请更换浏览器',
-        type: 'error'
-    });
+    ErrMsg("上传插件不支持，请更换浏览器")
+
 
 }
 
@@ -227,6 +308,7 @@ flow.on('fileAdded', function(file, event){
 
     file.curprogress = 0
     file.uploadstatus = ''
+    file.isSecond = 0
     vm.uploadTableData.push(file)
     get_qetag_and_upload(file)
 });
@@ -270,10 +352,8 @@ flow.on('fileError', function(file, message,chunk){
     if (401 === chunk.xhr.status) {
         window.location = '/login';
     }else {
-        vm.$message({
-            message: "error:"+chunk.xhr.status,
-            type: 'error'
-        });
+        ErrMsg("error:"+chunk.xhr.status)
+
     }
 
 });
@@ -395,22 +475,36 @@ function calcEtag(sha1,file) {
 }
 
 function uploadfile(file) {
-    // var endTime = +new Date();
-    // console.log("用时共计"+(endTime-beginTime)+"ms");
-    // console.log("upload qetag:"+qetag)
 
-    if (!fileSecondsPass(file.qetag)){
-        flow.upload()
-    }else {
-        // markup and tip the file was uploaded success
-        // TODO
-    }
+    fileSecondsPass(function (succ) {
+        if (!succ){
+            flow.upload()
+        }else {
+            //the seconds pass succ
+            file.isSecond = 1
+            file.cancel()
+            GetFiles(vm.$data.parentDir)
+        }
+    },file)
 
-    //
 }
 //fileSecondsPass if can seconds-pass return true,else false
-function fileSecondsPass() {
-    return false
+function fileSecondsPass(f,file) {
+    var bodyFormData =new FormData()
+    bodyFormData.append("qetag",file.qetag)
+    bodyFormData.append("fileName",file.name)
+    bodyFormData.append("parentDir",vm.$data.parentDir)
+    axios.post("/file/filesecondspass",bodyFormData)
+        .then(resp=>{
+            if (parseInt(resp.data.Status)==1){
+                f(true)
+            }else {
+                f(false)
+            }
+        }).catch(err=>{
+            f(false)
+    })
+
 }
 
 

@@ -14,7 +14,7 @@
             </el-col>
 
             <el-col style="text-align: right;line-height: 60px" :span="8">
-                <el-avatar style="margin-top: 12px;position: absolute;right: 80px;" :size="35"    src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"></el-avatar>
+                <el-avatar style="margin-top: 12px;position: absolute;right: 80px;" :size="35"    src="/assets/img/t.png"></el-avatar>
                 <el-dropdown  @command="UserCommandHandler">
                       <span class="el-dropdown-link" style="color: white;font-size: 18px">
 
@@ -35,8 +35,8 @@
 
     <el-container >
         <el-aside width="200px" style="background-color: rgb(238, 241, 246);">
-            <el-menu background-color=" rgb(238, 241, 246)">
-                <el-menu-item index="4">
+            <el-menu @select="allfile" background-color=" rgb(238, 241, 246)">
+                <el-menu-item  index="1">
                     <i class="el-icon-folder-opened"></i>
                     <span slot="title">全部文件</span>
                 </el-menu-item>
@@ -69,17 +69,21 @@
                 </el-col>
 
             </el-row>
+            <el-row style="padding-left: 10px">
+                <el-col :span="24">
+                    <el-breadcrumb  separator=">" style="font-size: 12px;">
+                        <el-breadcrumb-item  v-for="item in NavArray" :key="item.ID" >
+                            <a class="filemouse" style="color: #3a8ee6" @click="preDir(item)">$item.FileName$</a>
+
+                        </el-breadcrumb-item>
+                    </el-breadcrumb>
+                </el-col>
+
+            </el-row>
 
 
-            <el-dialog title="目录名称" :close-on-click-modal=false width="400px" :visible.sync="dialogFormVisible">
-                <el-form >
-                    <el-input v-model="dir_name" autocomplete="off"></el-input>
-                </el-form>
-                <div slot="footer" class="dialog-footer">
-                    <el-button @click="dialogFormVisible = false">取 消</el-button>
-                    <el-button type="primary" @click="OnCreateDir">确 定</el-button>
-                </div>
-            </el-dialog>
+
+
 
             <el-table :height="tableheight" ref="multipleTable" :data="tableData" style="width: 100%;font-size: 13px"
                       @selection-change="handleSelectionChange"
@@ -143,8 +147,8 @@
 
             <el-table-column label="状态" width="100px" >
                 <template slot-scope="scope">
-
-                    <el-progress style="position: relative;top: 5.6px;" :width = 40  :stroke-width=3   :status=scope.row.uploadstatus  type="circle" :percentage=scope.row.curprogress ></el-progress>
+                    <span v-if="scope.row.isSecond">秒传</span>
+                    <el-progress v-else style="position: relative;top: 5.6px;" :width = 40  :stroke-width=3   :status=scope.row.uploadstatus  type="circle" :percentage=scope.row.curprogress ></el-progress>
                 </template>
             </el-table-column>
 
@@ -163,6 +167,39 @@
     </el-main>
 </el-drawer>
 
+<el-dialog title="目录名称" :close-on-click-modal=false width="400px" :visible.sync="dialogFormVisible">
+    <el-form >
+        <el-input v-model="dir_name" autocomplete="off"></el-input>
+    </el-form>
+    <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogFormVisible = false">取 消</el-button>
+        <el-button type="primary" @click="OnCreateDir">确 定</el-button>
+    </div>
+</el-dialog>
+
+<el-dialog title="重命名" width="400px" :visible.sync="newFileNameDialogFormVisible">
+    <el-form >
+        <el-input v-model="newFileName" autocomplete="off"></el-input>
+    </el-form>
+    <div slot="footer" class="dialog-footer">
+        <el-button @click="newFileNameDialogFormVisible = false">取 消</el-button>
+        <el-button type="primary" @click="OnRenameFile">确 定</el-button>
+    </div>
+</el-dialog>
+
+
+
+<el-dialog title="提示"
+        :visible.sync="DeletedialogVisible"
+        width="400px">
+    <span>确认删除？</span>
+    <span slot="footer" class="dialog-footer">
+    <el-button @click="DeletedialogVisible = false">取 消</el-button>
+    <el-button type="danger" @click="fileDelete">确 定</el-button>
+  </span>
+</el-dialog>
+
+
 <div id="context-menu" class="context-menu" style="display: none">
     <ul class="list" style="z-index: 100;  display: block;">
 
@@ -173,11 +210,9 @@
         <li class="" style="display: block;">分享</li>
         <li class="separate"></li>
 
-        <li class="" style="display: block;">复制到</li>
         <li class="" style="display: block;">移动到</li>
-        <li class="separate" ></li>
-        <li  class="" style="display: block;">重命名</li>
-        <li  class="" style="display: block;">删除</li>
+        <li  @click="preOnRenameFile" class="" style="display: block;">重命名</li>
+        <li @click="fileDeleteConfirm"  class="" style="display: block;">删除</li>
         </li>
     </ul>
 </div>
