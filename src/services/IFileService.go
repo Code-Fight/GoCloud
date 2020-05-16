@@ -13,6 +13,8 @@ type IFileService interface {
 	AddUserFileRelation(username, fileqetag, filename,fileaddr string, filesize ,is_dir,parent_dir int64) (succ bool,err error)
 	DeleteFile(username, fileqetag string,parent_id int64)(succ bool,err error)
 	UpdateUserFileName(id int64,name string)(succ bool,err error)
+	GetUserDirByUser(user_name string,ignoreNode int)(dirs *[]map[string]interface{},err error)
+	MoveFileTo(id, parent_dir int64) ( bool,  error)
 }
 
 type fileService struct {
@@ -65,20 +67,28 @@ func (this *fileService) UpdateUserFileName(id int64,name string)(succ bool,err 
 	return this.dao.UpdateUserFileName(id,name)
 }
 
-func (this *fileService) GetUserDirByUser(user_name string)(dirs *[]map[string]interface{},err error){
+func (this *fileService) GetUserDirByUser(user_name string,ignoreNode int)(dirs *[]map[string]interface{},err error){
 	 user_dir,err:= this.dao.SelectUserDirs(user_name)
 	 if err!=nil{
 	 	return nil,err
 	 }
 	 dirs = &[]map[string]interface{}{}
 	 root := getNode(user_dir,0)
-	 CreateTree(dirs,user_dir,root)
+	 createTree(dirs,user_dir,root,ignoreNode)
 	 return dirs,nil
 }
 
-func CreateTree(tree *[]map[string]interface{},dirs []datamodels.UserFile,nodes  []datamodels.UserFile,)  {
+func (this *fileService)  MoveFileTo(id, parent_dir int64) ( bool,  error) {
+	return this.dao.UpdateUserFileParentDir(id,parent_dir)
+}
+
+
+func createTree(tree *[]map[string]interface{},dirs []datamodels.UserFile,nodes  []datamodels.UserFile,ignoreNode int)  {
 
 	for _,v :=range nodes{
+		if v.ID == ignoreNode {
+			continue
+		}
 		_node :=map[string]interface{}{}
 		_node["id"] = v.ID
 		_node["label"] = v.FileName
@@ -88,7 +98,7 @@ func CreateTree(tree *[]map[string]interface{},dirs []datamodels.UserFile,nodes 
 		if len(temp)>0{
 			children :=&[]map[string]interface{}{}
 			_node["children"] = children
-			CreateTree(children,dirs,nodes)
+			createTree(children,dirs,temp,ignoreNode)
 		}
 	}
 
@@ -103,3 +113,4 @@ func getNode(data []datamodels.UserFile,parent_id int64) []datamodels.UserFile {
 	}
 	return temp
 }
+

@@ -360,3 +360,57 @@ func (this *FileController) GetRenamefileBy(id int64, name string) {
 	})
 
 }
+
+func (this *FileController) GetUserdirsBy(id int)  {
+	sess := sessions.Get(this.Ctx)
+
+	user, ok := (sess.Get("user")).(*datamodels.UserModel)
+	if !ok {
+		this.Ctx.Application().Logger().Error("parse user err by sesssion")
+		return
+	}
+	dirs,err:=this.Service.GetUserDirByUser(user.Username,id)
+	if err!=nil{
+		this.Ctx.JSON(datamodels.RespModel{
+			Status: 0,
+			Msg:    err.Error(),
+		})
+		return
+	}
+	this.Ctx.JSON(datamodels.RespModel{
+		Status: 1,
+		Msg:    "OK",
+		Data:   dirs,
+	})
+
+}
+
+func (this *FileController) PostMovefile() {
+	user_file_id,err :=strconv.ParseInt( this.Ctx.Request().FormValue("id"),10,0)
+	dir ,err:=strconv.ParseInt(  this.Ctx.Request().FormValue("dir"),10,0)
+
+	if err!=nil{
+		this.Ctx.JSON(datamodels.RespModel{
+			Status: 0,
+			Msg:    err.Error(),
+		})
+		return
+	}
+
+	succ,err := this.Service.MoveFileTo(user_file_id,dir)
+	if !succ||err!=nil{
+		this.Ctx.JSON(datamodels.RespModel{
+			Status: 0,
+			Msg:    err.Error(),
+		})
+		return
+	}
+
+	this.Ctx.JSON(datamodels.RespModel{
+		Status: 1,
+		Msg:    "OK",
+	})
+
+
+
+}

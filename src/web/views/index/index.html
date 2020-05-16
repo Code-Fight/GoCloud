@@ -198,6 +198,31 @@
     <el-button type="danger" @click="fileDelete">确 定</el-button>
   </span>
 </el-dialog>
+<el-dialog title="移动文件到" width="400px" :visible.sync="moveFileDialogFormVisible" >
+
+    <el-scrollbar>
+        <el-scrollbar style="border: #5b667b solid 1px; height: 400px">
+
+            <el-tree :data="moveFileData"
+                 :highlight-current="true"
+                 node-key="id"
+                 :default-expanded-keys='moveFileTreeDefaultExpanded'
+                 @node-click="moveFileTreeSelect"
+                 :props="moveFiledefaultProps"
+        >
+        <span class="custom-tree-node" slot-scope="{ node, data }">
+            <span style="color: #3a8ee6"><i class="el-icon-folder"></i> $node.label$</span>
+        </span>
+        </el-tree>
+        </el-scrollbar>
+    </el-scrollbar>
+
+
+    <div slot="footer" class="dialog-footer">
+        <el-button @click="moveFileDialogFormVisible = false">取 消</el-button>
+        <el-button type="primary" @click="OnMoveFile">确 定</el-button>
+    </div>
+</el-dialog>
 
 
 <div id="context-menu" class="context-menu" style="display: none">
@@ -210,7 +235,7 @@
         <li class="" style="display: block;">分享</li>
         <li class="separate"></li>
 
-        <li class="" style="display: block;">移动到</li>
+        <li @click="preOnMoveFile" class="" style="display: block;">移动到</li>
         <li  @click="preOnRenameFile" class="" style="display: block;">重命名</li>
         <li @click="fileDeleteConfirm"  class="" style="display: block;">删除</li>
         </li>

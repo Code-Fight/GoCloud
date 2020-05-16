@@ -23,7 +23,15 @@ var vm =new Vue({
             "FileName":"首页"
         }],
         newFileName:"",
-        newFileNameDialogFormVisible:false
+        newFileNameDialogFormVisible:false,
+        moveFileDialogFormVisible:false,
+        moveFileData:[],
+        moveFileTreeDefaultExpanded:[],
+        moveFiledefaultProps: {
+            children: 'children',
+            label: 'label'
+        },
+        curMoveFileTreeSelected:{}
 
     },
     methods: {
@@ -217,6 +225,51 @@ var vm =new Vue({
                 }
             })
         },
+        preOnMoveFile(){
+            RightMenuDisplayNone()
+            this.$axios.get("/file/userdirs/"+this.curRightRow.ID).
+            then(resp=>{
+                if (resp.data.Status ==1){
+                    console.log(resp.data.Data)
+                    this.moveFileDialogFormVisible =true
+
+
+
+                    tmp=[{"id":0,"label":"全部文件","children":resp.data.Data}]
+                    this.moveFileData=tmp
+                    this.moveFileTreeDefaultExpanded.push(0)
+
+
+                }else {
+                    ErrMsg(resp.data.Msg)
+                }
+            })
+        },
+        moveFileTreeSelect(data,node,obj){
+            this.curMoveFileTreeSelected= data.id
+        },
+        OnMoveFile(){
+            this.moveFileDialogFormVisible=false
+            data =new FormData()
+            data.append("id",this.curRightRow.ID)
+            data.append("dir",this.curMoveFileTreeSelected)
+
+            this.$axios.post("/file/movefile",data).
+            then(resp=>{
+                if (resp.data.Status ==1){
+                    GetFiles(this.parentDir)
+                }else {
+                    ErrMsg(resp.data.Msg)
+                }
+            })
+        },
+        moveFileFilterNode(value, data){
+            if (data.id==value){
+                return false
+            }
+            return true
+        }
+
 
     },
     created: function () {

@@ -20,6 +20,7 @@ type IFileDao interface {
 	DeleteUserFile(username, fileqetag string)(succ bool,err error)
 	UpdateUserFileStatus(status,id int64)(succ bool,err error)
 	UpdateUserFileName(id int64,name string)(succ bool,err error)
+	UpdateUserFileParentDir(id ,parent_dir int64)(succ bool,err error)
 }
 
 type fileDao struct {
@@ -229,7 +230,7 @@ func (this *fileDao) SelectUserDirs(username string) (userfile []datamodels.User
 		return
 	}
 	stmt, err := this.mysqlConn.Prepare(
-		"select id, file_qetag,file_name from tbl_user_file where user_name=? status=1 and is_dir=1")
+		"select id, file_qetag,file_name,parent_dir from tbl_user_file where user_name=? and status=1 and is_dir=1")
 	if err != nil {
 		return nil, err
 	}
@@ -252,4 +253,24 @@ func (this *fileDao) SelectUserDirs(username string) (userfile []datamodels.User
 	}
 
 	return userfile, nil
+}
+
+func (this *fileDao) UpdateUserFileParentDir(id ,parent_dir int64)(succ bool,err error){
+	if err = this.Conn(); err != nil {
+		return
+	}
+	stmt, err :=this.mysqlConn.Prepare("update tbl_user_file set parent_dir = ?,last_update=? where" +
+		" id=? ")
+	if err != nil {
+		fmt.Println("Failed to prepare statement,err:" + err.Error())
+		return false,err
+	}
+	defer stmt.Close()
+	_, err = stmt.Exec(parent_dir,time.Now(), id)
+	if err != nil {
+		fmt.Println(err.Error())
+		return false,err
+	}
+
+	return true,nil
 }
