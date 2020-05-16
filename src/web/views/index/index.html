@@ -187,8 +187,6 @@
     </div>
 </el-dialog>
 
-
-
 <el-dialog title="提示"
         :visible.sync="DeletedialogVisible"
         width="400px">
@@ -198,6 +196,7 @@
     <el-button type="danger" @click="fileDelete">确 定</el-button>
   </span>
 </el-dialog>
+
 <el-dialog title="移动文件到" width="400px" :visible.sync="moveFileDialogFormVisible" >
 
     <el-scrollbar>
@@ -224,6 +223,40 @@
     </div>
 </el-dialog>
 
+<el-dialog :title="shareForm.name" width="500px" :visible.sync="shareDialogFormVisible">
+    <el-form :model="shareForm" label-width="80px">
+
+        <el-form-item style="width: 200px;"  label="有 效 期">
+            <el-select v-model="shareForm.expdate"  placeholder="">
+                <el-option label="1 天" value="1"></el-option>
+                <el-option label="7 天" value="7"></el-option>
+                <el-option label="永久有效" value="0"></el-option>
+            </el-select>
+        </el-form-item>
+
+        <el-form-item label="设置密码">
+            <el-switch v-model="shareForm.haspwd"></el-switch>
+        </el-form-item>
+
+        <el-form-item  v-if="shareForm.haspwd" label="分享密码">
+            <el-input  style="width: 120px;" v-model="shareForm.pwd" width="200px"></el-input>
+        </el-form-item>
+
+        <el-form-item label="分享链接">
+            <el-input v-model="shareForm.link" width="200px"></el-input>
+        </el-form-item>
+
+
+
+
+
+    </el-form>
+
+    <div slot="footer" class="dialog-footer">
+        <el-button @click="shareDialogFormVisible = false">取 消</el-button>
+        <el-button type="primary" @click="OnShareFile">创建链接</el-button>
+    </div>
+</el-dialog>
 
 <div id="context-menu" class="context-menu" style="display: none">
     <ul class="list" style="z-index: 100;  display: block;">
@@ -231,8 +264,7 @@
         <li  @click="fileDownload" class="" style="display: block;">下载</li>
         <li class="separate" ></li>
 
-
-        <li class="" style="display: block;">分享</li>
+        <li @click="preShareFile" class="" style="display: block;">分享</li>
         <li class="separate"></li>
 
         <li @click="preOnMoveFile" class="" style="display: block;">移动到</li>

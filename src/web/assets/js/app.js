@@ -31,7 +31,15 @@ var vm =new Vue({
             children: 'children',
             label: 'label'
         },
-        curMoveFileTreeSelected:{}
+        curMoveFileTreeSelected:{},
+        shareDialogFormVisible:false,
+        shareForm: {
+            name: '分享文件(夹):',
+            expdate: '7',
+            haspwd: true,
+            pwd: '',
+            link: ''
+        }
 
     },
     methods: {
@@ -268,6 +276,16 @@ var vm =new Vue({
                 return false
             }
             return true
+        },
+        preShareFile(){
+            RightMenuDisplayNone()
+            this.shareForm.pwd = randomCode()
+            this.shareForm.link = window.location.href+"s/"+this.curRightRow.FileQetag
+            this.shareDialogFormVisible = true
+            this.shareForm.name='分享文件(夹): '+this.curRightRow.FileName
+        },
+        OnShareFile(){
+
         }
 
 
@@ -327,6 +345,16 @@ function ErrMsg(msg) {
     });
 }
 
+//ref :https://blog.csdn.net/qq_34292479/article/details/87621491
+function randomCode(){
+    var arr = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','0','1','2','3','4','5','6','7','8','9'];
+    var idvalue ='';
+    var n = 4;
+    for(var i=0;i<n;i++){
+        idvalue+=arr[Math.floor(Math.random()*62)];
+    }
+    return idvalue;
+}
 
 
 
