@@ -11,8 +11,10 @@ import (
 
 type IFileDao interface {
 	Conn() error
+	//tbale_file
 	SelectFile(fileqetag string) (file *datamodels.FileModel,err error)
 	InsertFile(fileqetag string, filename string, filesize int64, fileaddr string) (succ bool,err error)
+	//table_user_file
 	SelectUserFiles(username string,parent_dir,status int64) (userfile []datamodels.UserFile, err error)
 	SelectUserDirs(username string) (userfile []datamodels.UserFile, err error)
 	SelectUserFilesByQetag(username,fileqetag string,parent_dir,status int64) (userfile *datamodels.UserFile, err error)
@@ -21,6 +23,9 @@ type IFileDao interface {
 	UpdateUserFileStatus(status,id int64)(succ bool,err error)
 	UpdateUserFileName(id int64,name string)(succ bool,err error)
 	UpdateUserFileParentDir(id ,parent_dir int64)(succ bool,err error)
+	//table_share_file
+	InsertShareFile(qetag, pwd string) (succ bool, err error)
+	SelectShareFileBy(qetag string) (share *datamodels.FileShareModel, err error)
 }
 
 type fileDao struct {
@@ -273,4 +278,58 @@ func (this *fileDao) UpdateUserFileParentDir(id ,parent_dir int64)(succ bool,err
 	}
 
 	return true,nil
+}
+
+func (this *fileDao) InsertShareFile(qetag, pwd string) (succ bool, err error) {
+	if err = this.Conn(); err != nil {
+		return
+	}
+	stmt, err :=this.mysqlConn.Prepare("insert ignore into tbl_user_share_file" +
+		"(`file_qetag`,`create_at`,`share_pwd`) values(?,?,?)")
+	if err != nil {
+		fmt.Println("Failed to prepare statement,err:" + err.Error())
+		return false,err
+	}
+	defer stmt.Close()
+	ret, err := stmt.Exec(qetag, time.Now(), pwd)
+	if err != nil {
+		fmt.Println(err.Error())
+		return false,err
+	}
+	if rf, err := ret.RowsAffected(); nil == err {
+		if rf <= 0 {
+			fmt.Println("File with hash been shared")
+		}
+		return true,err
+	}
+	return false,err
+}
+
+func (this *fileDao) SelectShareFileBy(qetag string) (share *datamodels.FileShareModel, err error) {
+	if err = this.Conn(); err != nil {
+		return
+	}
+	stmt, err :=this.mysqlConn.Prepare("insert ignore into tbl_user_share_file" +
+		"(`file_qetag`,`create_at`,`share_pwd`) values(?,?,?)")
+	if err != nil {
+		fmt.Println("Failed to prepare statement,err:" + err.Error())
+		return nil,err
+	}
+	defer stmt.Close()
+	row, err := stmt.Query(qetag)
+	if err != nil {
+		fmt.Println(err.Error())
+		return nil,err
+	}
+
+
+	result := common.GetResultRow(row)
+	if len(result) == 0 {
+		return nil, err
+	}
+
+	share =&datamodels.FileShareModel{}
+	common.DataToStructByTagSql(result,share)
+    return share,nil
+
 }

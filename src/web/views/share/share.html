@@ -1,0 +1,68 @@
+<el-container style="border: 1px solid #eee"  >
+
+    <el-header style="text-align: left; font-size: 16px">
+        <el-row type="flex">
+            <el-col :span="1">
+                <i class="el-icon-eleme" style="font-size: 40px;line-height: 60px;padding-left: -10px"></i>
+
+            </el-col>
+            <el-col :span="15">
+                <span style="font-size: 28px;font-weight: 500;line-height: 62px;margin-left: -20px;">GoCloud</span>
+
+            </el-col>
+
+            <el-col style="text-align: right;line-height: 60px" :span="8">
+                <el-avatar style="margin-top: 12px;position: absolute;right: 80px;" :size="35"    src="/assets/img/t.png"></el-avatar>
+                <el-dropdown  @command="UserCommandHandler">
+                      <span class="el-dropdown-link" style="color: white;font-size: 18px">
+
+                        {{.username}}<i class="el-icon-arrow-down el-icon--right"></i>
+                      </span>
+                    <el-dropdown-menu slot="dropdown">
+                        <el-dropdown-item command="info" icon="el-icon-user">个人中心</el-dropdown-item>
+                        <el-dropdown-item command="exit" icon="el-icon-close">退  出</el-dropdown-item>
+                    </el-dropdown-menu>
+                </el-dropdown>
+            </el-col>
+
+        </el-row>
+
+
+    </el-header>
+
+
+    <el-container >
+
+
+        <el-main style="padding: 0px;" >
+
+
+
+
+            <el-table :height="tableheight" ref="multipleTable" :data="share.tableData" style="width: 100%;font-size: 13px"
+
+
+
+                      :default-sort = "{prop: 'FileName', order: 'descending'}"
+            >
+
+                <el-table-column type="selection" width="55">
+                </el-table-column>
+
+                <el-table-column sortable prop="FileName" label="文件名">
+                    <template  slot-scope="temp">
+                        <i style="font-size: 22px;color: #3a8ee6;position: absolute" v-bind:class="[temp.row.IsDir ? 'el-icon-folder' : 'el-icon-document']"></i>
+                        <span class="filemouse" style="margin-left: 35px" >$temp.row.FileName$</span>
+                    </template>
+                </el-table-column>
+
+
+                <el-table-column sortable prop="FileSize" label="大小" width="200" :formatter="table_silze_formatter">
+                </el-table-column>
+
+                <el-table-column sortable prop="LastUpdated" label="修改日期" width="300" :formatter="table_date_formatter">
+                </el-table-column>
+            </el-table>
+            </el-main>
+    </el-container>
+</el-container>

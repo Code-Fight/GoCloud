@@ -15,6 +15,9 @@ type IFileService interface {
 	UpdateUserFileName(id int64,name string)(succ bool,err error)
 	GetUserDirByUser(user_name string,ignoreNode int)(dirs *[]map[string]interface{},err error)
 	MoveFileTo(id, parent_dir int64) ( bool,  error)
+
+	CreateShareFile(qetag, pwd string) (succ bool, err error)
+	QueryShareFileBy(qetag string) (share *datamodels.FileShareModel, err error)
 }
 
 type fileService struct {
@@ -80,6 +83,14 @@ func (this *fileService) GetUserDirByUser(user_name string,ignoreNode int)(dirs 
 
 func (this *fileService)  MoveFileTo(id, parent_dir int64) ( bool,  error) {
 	return this.dao.UpdateUserFileParentDir(id,parent_dir)
+}
+
+
+func (this *fileService)  CreateShareFile(qetag, pwd string) (succ bool, err error){
+	return this.dao.InsertShareFile(qetag,pwd)
+}
+func (this *fileService)  QueryShareFileBy(qetag string) (share *datamodels.FileShareModel, err error){
+	return this.dao.SelectShareFileBy(qetag)
 }
 
 

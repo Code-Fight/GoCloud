@@ -39,6 +39,9 @@ var vm =new Vue({
             haspwd: true,
             pwd: '',
             link: ''
+        },
+        share:{
+            tableData:[]
         }
 
     },
@@ -194,6 +197,10 @@ var vm =new Vue({
         },
         fileDownload(){
             RightMenuDisplayNone()
+            if (this.curRightRow.IsDir==1){
+                ErrMsg("暂不支持文件夹下载功能")
+                return
+            }
             try {
                 var elemIF = document.createElement("iframe");
                 elemIF.src = "/file/downloadfile/"+this.curRightRow.FileName+"?fileqetag="+this.curRightRow.FileQetag;
@@ -280,7 +287,7 @@ var vm =new Vue({
         preShareFile(){
             RightMenuDisplayNone()
             this.shareForm.pwd = randomCode()
-            this.shareForm.link = window.location.href+"s/"+this.curRightRow.FileQetag
+            this.shareForm.link = window.location.href+"share/"+this.curRightRow.FileQetag
             this.shareDialogFormVisible = true
             this.shareForm.name='分享文件(夹): '+this.curRightRow.FileName
         },
