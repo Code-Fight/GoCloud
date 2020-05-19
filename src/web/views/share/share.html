@@ -1,68 +1,165 @@
-<el-container style="border: 1px solid #eee"  >
+<div id="app" style="height: 100vh;display: flex" v-cloak>
+    <input style="display: none" id="share_id" value="{{.share_id}}">
 
-    <el-header style="text-align: left; font-size: 16px">
-        <el-row type="flex">
-            <el-col :span="1">
-                <i class="el-icon-eleme" style="font-size: 40px;line-height: 60px;padding-left: -10px"></i>
 
-            </el-col>
-            <el-col :span="15">
-                <span style="font-size: 28px;font-weight: 500;line-height: 62px;margin-left: -20px;">GoCloud</span>
+    <el-container style="border: 1px solid #eee"  >
 
-            </el-col>
+        <el-header style="text-align: left; font-size: 16px">
+            <el-row type="flex">
+                <el-col :span="1">
+                    <i  class="el-icon-eleme" style="font-size: 40px;line-height: 60px;padding-left: -10px">
 
-            <el-col style="text-align: right;line-height: 60px" :span="8">
-                <el-avatar style="margin-top: 12px;position: absolute;right: 80px;" :size="35"    src="/assets/img/t.png"></el-avatar>
-                <el-dropdown  @command="UserCommandHandler">
+                    </i>
+
+                </el-col>
+                <el-col :span="15">
+                    <span style="font-size: 28px;font-weight: 500;line-height: 62px;margin-left: -20px;">GoCloud</span>
+
+                </el-col>
+
+                <el-col v-if="was_login()" style="text-align: right;line-height: 60px" :span="8">
+                    <el-avatar style="margin-top: 12px;position: absolute;right: 80px;" :size="35"    src="/assets/img/t.png"></el-avatar>
+                    <el-dropdown  @command="UserCommandHandler">
                       <span class="el-dropdown-link" style="color: white;font-size: 18px">
 
                         {{.username}}<i class="el-icon-arrow-down el-icon--right"></i>
                       </span>
-                    <el-dropdown-menu slot="dropdown">
-                        <el-dropdown-item command="info" icon="el-icon-user">个人中心</el-dropdown-item>
-                        <el-dropdown-item command="exit" icon="el-icon-close">退  出</el-dropdown-item>
-                    </el-dropdown-menu>
-                </el-dropdown>
-            </el-col>
+                        <el-dropdown-menu slot="dropdown">
+                            <el-dropdown-item command="info" icon="el-icon-user">个人中心</el-dropdown-item>
+                            <el-dropdown-item command="exit" icon="el-icon-close">退  出</el-dropdown-item>
+                        </el-dropdown-menu>
+                    </el-dropdown>
+                </el-col>
 
-        </el-row>
-
-
-    </el-header>
+            </el-row>
 
 
-    <el-container >
+        </el-header>
 
 
-        <el-main style="padding: 0px;" >
-
-
-
-
-            <el-table :height="tableheight" ref="multipleTable" :data="share.tableData" style="width: 100%;font-size: 13px"
-
-
-
-                      :default-sort = "{prop: 'FileName', order: 'descending'}"
-            >
-
-                <el-table-column type="selection" width="55">
-                </el-table-column>
-
-                <el-table-column sortable prop="FileName" label="文件名">
-                    <template  slot-scope="temp">
-                        <i style="font-size: 22px;color: #3a8ee6;position: absolute" v-bind:class="[temp.row.IsDir ? 'el-icon-folder' : 'el-icon-document']"></i>
-                        <span class="filemouse" style="margin-left: 35px" >$temp.row.FileName$</span>
-                    </template>
-                </el-table-column>
-
-
-                <el-table-column sortable prop="FileSize" label="大小" width="200" :formatter="table_silze_formatter">
-                </el-table-column>
-
-                <el-table-column sortable prop="LastUpdated" label="修改日期" width="300" :formatter="table_date_formatter">
-                </el-table-column>
-            </el-table>
+        <el-container v-cloak v-if="!file_status&&!show_content" >
+            <el-main style="padding: 0px;text-align: center" >
+                <i  class="el-icon-warning" style="color: #3a8ee6;font-size: 70px;padding-top: 150px"></i>
+                <p></p>
+                <span >文件不存在或分享链接已过期</span>
             </el-main>
+        </el-container >
+
+
+        <el-container v-cloak v-if="file_status&&need_pwd&&!show_content">
+
+
+            <el-main style="padding: 0px;text-align: center;background-color: #EFF2F6" >
+                <div style="display: flex;
+            ">
+                    <el-card shadow="always" header="分享文件需要输入密码 :" style="margin:auto;width: 500px; margin-top: 200px;  height: 150px;text-align: left">
+                        <el-form  label-position="top"   >
+                            <el-form-item label="">
+                                <el-input name="pwd" show-password maxlength="4"  v-model="share_pwd" style="width: 350px;padding-right: 5px" ></el-input>
+                                <el-button type="primary" @click="onValid">立即打开</el-button>
+                            </el-form-item>
+
+
+                        </el-form>
+                    </el-card>
+
+
+                </div>
+
+
+
+            </el-main>
+        </el-container>
+
+
+
+        <el-container v-cloak v-if="show_content">
+
+
+            <el-main v-cloak v-if="!is_dir" style="padding: 0px;text-align: center;background-color: #EFF2F6" >
+                <div style="display: flex;">
+
+                    <div style="border-radius: 5px;box-shadow: 10px 10px 5px #888888; background-color: white;margin:auto;width: 700px; margin-top: 150px;  height: 450px;text-align: left">
+
+                        <el-row style="padding-left: 20px;padding-top: 20px">
+                            <el-col :span="12" style="text-align: left">
+                                <i class="el-icon-document" style="font-size: 20px"></i>
+                                <span style="line-height: 60px;font-size: 20px;font-weight: 700">$file_name$</span>
+                            </el-col>
+                            <el-col :span="12" style="text-align: right;line-height: 60px;padding-right: 20px">
+                                <el-button type="primary" @click="preOnMoveFile" plain>文件保存</el-button>
+                                <el-button type="primary" @click="fileDownload" plain>文件下载</el-button>
+                            </el-col>
+                        </el-row>
+                        <el-row  style="padding-left: 20px">
+                            <el-col :span="24">
+                                <i class="el-icon-timer"></i>
+                                <span>$create_time$</span>
+                                <span style="padding-left: 40px">有效期: $share_time$</span>
+
+                            </el-col>
+                        </el-row>
+
+                        <el-divider class ="c-el-divider" style="margin: 5px"></el-divider>
+
+
+
+                        <div style="background-color: #ecf3fa;height: 73%;width: 99%;margin: 4px;margin-top: -6px;text-align: center">
+
+                            <i class="el-icon-document" style="color: #3a8ee6;width: 100%;font-weight: 700;font-size: 70px;padding-top: 18%"></i>
+                           <div style="width: 100%;padding-top: 15px">
+                               <span style=";width: 100%;font-size: 12px">$file_name$</span>
+                           </div>
+
+
+                        </div>
+
+                    </div>
+
+
+                </div>
+
+
+
+            </el-main>
+
+
+        </el-container >
+
+
     </el-container>
-</el-container>
+
+
+    <el-dialog title="保存文件到" width="400px" :visible.sync="moveFileDialogFormVisible" >
+
+        <el-scrollbar>
+            <el-scrollbar style="border: #5b667b solid 1px; height: 400px">
+
+                <el-tree :data="moveFileData"
+                         :highlight-current="true"
+                         node-key="id"
+                         :default-expanded-keys='moveFileTreeDefaultExpanded'
+                         @node-click="moveFileTreeSelect"
+                         :props="moveFiledefaultProps"
+                >
+        <span class="custom-tree-node" slot-scope="{ node, data }">
+            <span style="color: #3a8ee6"><i class="el-icon-folder"></i> $node.label$</span>
+        </span>
+                </el-tree>
+            </el-scrollbar>
+        </el-scrollbar>
+
+
+        <div slot="footer" class="dialog-footer">
+            <el-button @click="moveFileDialogFormVisible = false">取 消</el-button>
+            <el-button type="primary" @click="OnMoveFile">确 定</el-button>
+        </div>
+    </el-dialog>
+
+</div>
+
+
+<script>
+    var username={{.username}}
+</script>
+<script src="/assets/js/share.js"></script>

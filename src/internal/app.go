@@ -97,5 +97,10 @@ func registerHandler(app *iris.Application,db *sql.DB) {
 	file.Register(fileService)
 	file.Handle(new(controllers.FileController))
 
+	//share
+	share:=mvc.New(app.Party("/share"))
+	share.Register(fileService)
+	share.Handle(new(controllers.ShareController))
+
 
 }

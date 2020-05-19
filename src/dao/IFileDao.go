@@ -15,17 +15,20 @@ type IFileDao interface {
 	SelectFile(fileqetag string) (file *datamodels.FileModel,err error)
 	InsertFile(fileqetag string, filename string, filesize int64, fileaddr string) (succ bool,err error)
 	//table_user_file
-	SelectUserFiles(username string,parent_dir,status int64) (userfile []datamodels.UserFile, err error)
-	SelectUserDirs(username string) (userfile []datamodels.UserFile, err error)
-	SelectUserFilesByQetag(username,fileqetag string,parent_dir,status int64) (userfile *datamodels.UserFile, err error)
+	SelectUserFiles(username string,parent_dir,status int64) (userfile []datamodels.UserFileModel, err error)
+	SelectUserDirs(username string) (userfile []datamodels.UserFileModel, err error)
+	SelectUserFilesByQetag(username,fileqetag string,parent_dir,status int64) (userfile *datamodels.UserFileModel, err error)
+	SelectUserFilesByID(ID int64) (userfile *datamodels.UserFileModel, err error)
 	InsertUserFile(username, fileqetag, filename string, filesize,is_dir,parent_dir int64) (succ bool,err error)
 	DeleteUserFile(username, fileqetag string)(succ bool,err error)
 	UpdateUserFileStatus(status,id int64)(succ bool,err error)
 	UpdateUserFileName(id int64,name string)(succ bool,err error)
 	UpdateUserFileParentDir(id ,parent_dir int64)(succ bool,err error)
 	//table_share_file
-	InsertShareFile(qetag, pwd string) (succ bool, err error)
-	SelectShareFileBy(qetag string) (share *datamodels.FileShareModel, err error)
+	InsertShareFile(user_file_id,share_time int64, pwd string) (id int64, err error)
+	UpdateShareFileShareID(id int64, share_id string) (succ bool, err error)
+	SelectShareFileBy(share_id string) (share *datamodels.FileShareModel, err error)
+	SelectShareFileAndUserFile(share_id string) (share *datamodels.UserFileShareModel, err error)
 }
 
 type fileDao struct {
@@ -99,7 +102,7 @@ func (this *fileDao) InsertUserFile(username, fileqetag, filename string, filesi
 }
 
 // SelectUserFiles : Get the user  first page files
-func (this *fileDao) SelectUserFiles(username string,parent_dir,status int64) (userfile []datamodels.UserFile, err error) {
+func (this *fileDao) SelectUserFiles(username string,parent_dir,status int64) (userfile []datamodels.UserFileModel, err error) {
 	if err = this.Conn(); err != nil {
 		return
 	}
@@ -122,7 +125,7 @@ func (this *fileDao) SelectUserFiles(username string,parent_dir,status int64) (u
 	}
 
 	for _,v :=range result{
-		temp :=&datamodels.UserFile{}
+		temp :=&datamodels.UserFileModel{}
 
 		common.DataToStructByTagSql(v,temp)
 		userfile = append(userfile, *temp)
@@ -162,7 +165,7 @@ func (this *fileDao) DeleteUserFile(username, fileqetag string)(succ bool,err er
 	return false,errors.New("didn't impl")
 }
 
-func (this *fileDao) SelectUserFilesByQetag(username,fileqetag string,parent_dir,status int64) (userfile *datamodels.UserFile, err error){
+func (this *fileDao) SelectUserFilesByQetag(username,fileqetag string,parent_dir,status int64) (userfile *datamodels.UserFileModel, err error){
 	if err = this.Conn(); err != nil {
 		return
 	}
@@ -183,7 +186,35 @@ func (this *fileDao) SelectUserFilesByQetag(username,fileqetag string,parent_dir
 	if len(result) == 0 {
 		return nil, err
 	}
-	userfile =&datamodels.UserFile{}
+	userfile =&datamodels.UserFileModel{}
+	common.DataToStructByTagSql(result,userfile)
+
+	return userfile, nil
+}
+
+
+func (this *fileDao) SelectUserFilesByID(ID int64) (userfile *datamodels.UserFileModel, err error){
+	if err = this.Conn(); err != nil {
+		return
+	}
+	stmt, err := this.mysqlConn.Prepare(
+		"select id, file_qetag,file_name,file_size,upload_at," +
+			"last_update,is_dir,parent_dir  from tbl_user_file where id=? ")
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(ID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := common.GetResultRow(rows)
+	if len(result) == 0 {
+		return nil, err
+	}
+	userfile =&datamodels.UserFileModel{}
 	common.DataToStructByTagSql(result,userfile)
 
 	return userfile, nil
@@ -230,7 +261,7 @@ func (this *fileDao) UpdateUserFileName(id int64,name string)(succ bool,err erro
 	return true,nil
 }
 
-func (this *fileDao) SelectUserDirs(username string) (userfile []datamodels.UserFile, err error){
+func (this *fileDao) SelectUserDirs(username string) (userfile []datamodels.UserFileModel, err error){
 	if err = this.Conn(); err != nil {
 		return
 	}
@@ -251,7 +282,7 @@ func (this *fileDao) SelectUserDirs(username string) (userfile []datamodels.User
 	}
 
 	for _,v :=range result{
-		temp :=&datamodels.UserFile{}
+		temp :=&datamodels.UserFileModel{}
 
 		common.DataToStructByTagSql(v,temp)
 		userfile = append(userfile, *temp)
@@ -280,43 +311,75 @@ func (this *fileDao) UpdateUserFileParentDir(id ,parent_dir int64)(succ bool,err
 	return true,nil
 }
 
-func (this *fileDao) InsertShareFile(qetag, pwd string) (succ bool, err error) {
+
+
+func (this *fileDao) InsertShareFile(user_file_id,share_time int64, pwd string) (id int64, err error) {
 	if err = this.Conn(); err != nil {
 		return
 	}
 	stmt, err :=this.mysqlConn.Prepare("insert ignore into tbl_user_share_file" +
-		"(`file_qetag`,`create_at`,`share_pwd`) values(?,?,?)")
+		"(`user_file_id`,`share_time`,`create_at`,`share_pwd`) values(?,?,?,?)")
+	if err != nil {
+		fmt.Println("Failed to prepare statement,err:" + err.Error())
+		return -1,err
+	}
+	defer stmt.Close()
+	ret, err := stmt.Exec(user_file_id,share_time, time.Now(), pwd)
+	if err != nil {
+		fmt.Println(err.Error())
+		return -1,err
+	}
+	if rf, err := ret.RowsAffected(); nil == err {
+		if rf <= 0 {
+			fmt.Println("Crate file share failed with :"+err.Error())
+			return -1,err
+		}
+	}
+
+	return ret.LastInsertId()
+}
+
+
+
+func (this *fileDao) UpdateShareFileShareID(id int64, share_id string) (succ bool, err error) {
+	if err = this.Conn(); err != nil {
+		return
+	}
+	stmt, err :=this.mysqlConn.Prepare("update tbl_user_share_file set share_id =?" +
+		"  where id =?")
 	if err != nil {
 		fmt.Println("Failed to prepare statement,err:" + err.Error())
 		return false,err
 	}
 	defer stmt.Close()
-	ret, err := stmt.Exec(qetag, time.Now(), pwd)
+	ret, err := stmt.Exec(share_id,id)
 	if err != nil {
 		fmt.Println(err.Error())
 		return false,err
 	}
 	if rf, err := ret.RowsAffected(); nil == err {
 		if rf <= 0 {
-			fmt.Println("File with hash been shared")
+			fmt.Println("Crate file share failed with :"+err.Error())
+			return false,err
 		}
-		return true,err
+
 	}
-	return false,err
+
+	return true,nil
 }
 
-func (this *fileDao) SelectShareFileBy(qetag string) (share *datamodels.FileShareModel, err error) {
+func (this *fileDao) SelectShareFileBy(share_id string) (share *datamodels.FileShareModel, err error) {
 	if err = this.Conn(); err != nil {
 		return
 	}
-	stmt, err :=this.mysqlConn.Prepare("insert ignore into tbl_user_share_file" +
-		"(`file_qetag`,`create_at`,`share_pwd`) values(?,?,?)")
+	stmt, err :=this.mysqlConn.Prepare("select * from  tbl_user_share_file" +
+		" where share_id=?")
 	if err != nil {
 		fmt.Println("Failed to prepare statement,err:" + err.Error())
 		return nil,err
 	}
 	defer stmt.Close()
-	row, err := stmt.Query(qetag)
+	row, err := stmt.Query(share_id)
 	if err != nil {
 		fmt.Println(err.Error())
 		return nil,err
@@ -332,4 +395,42 @@ func (this *fileDao) SelectShareFileBy(qetag string) (share *datamodels.FileShar
 	common.DataToStructByTagSql(result,share)
     return share,nil
 
+}
+
+func (this *fileDao) SelectShareFileAndUserFile(share_id string) (share *datamodels.UserFileShareModel, err error){
+	if err = this.Conn(); err != nil {
+		return
+	}
+	stmt, err :=this.mysqlConn.Prepare(
+		"select share_id,user_file_id,create_at,share_pwd,share_time,  " +
+			"tbl_user_file.id  ,user_name,file_qetag,file_size,file_name,is_dir,parent_dir,upload_at,last_update,status " +
+			"from tbl_user_share_file left join tbl_user_file  on tbl_user_share_file.user_file_id = tbl_user_file.id " +
+		" where share_id=?")
+	if err != nil {
+		fmt.Println("Failed to prepare statement,err:" + err.Error())
+		return nil,err
+	}
+	defer stmt.Close()
+	row, err := stmt.Query(share_id)
+	if err != nil {
+		fmt.Println(err.Error())
+		return nil,err
+	}
+
+
+	result := common.GetResultRow(row)
+	if len(result) == 0 {
+		return nil, err
+	}
+
+	share =&datamodels.UserFileShareModel{}
+	fileshare :=&datamodels.FileShareModel{}
+	common.DataToStructByTagSql(result,fileshare)
+	userfile :=&datamodels.UserFileModel{}
+	common.DataToStructByTagSql(result,userfile)
+	share.FileShareModel = *fileshare
+	share.UserFileModel = *userfile
+
+
+	return share,nil
 }

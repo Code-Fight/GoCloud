@@ -74,13 +74,14 @@ func GetResultRows(rows *sql.Rows) map[int]map[string]string {
 func DataToStructByTagSql(data map[string]string, obj interface{}) {
 	objValue := reflect.ValueOf(obj).Elem()
 	for i := 0; i < objValue.NumField(); i++ {
-		//获取sql对应的值
+
+		if  objValue.Field(i).Type().Kind()==reflect.Struct{
+			continue
+		}
+
 		value := data[objValue.Type().Field(i).Tag.Get("sql")]
-		//获取对应字段的名称
 		name := objValue.Type().Field(i).Name
-		//获取对应字段类型
 		structFieldType := objValue.Field(i).Type()
-		//获取变量类型，也可以直接写"string类型"
 
 		val := reflect.ValueOf(value)
 		if !val.IsValid(){
@@ -88,13 +89,11 @@ func DataToStructByTagSql(data map[string]string, obj interface{}) {
 		}
 		var err error
 		if structFieldType != val.Type() {
-			//类型转换
-			val, err = TypeConversion(value, structFieldType.Name()) //类型转换
+			val, err = TypeConversion(value, structFieldType.Name())
 			if err != nil {
 
 			}
 		}
-		//设置类型值
 		objValue.FieldByName(name).Set(val)
 	}
 }

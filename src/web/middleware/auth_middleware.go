@@ -18,6 +18,7 @@ func (this * auth) auth(ctx context.Context)   {
 	if auth,err:=sess.GetBoolean("authenticated");!auth||err!=nil{
 		if ctx.IsAjax(){
 			ctx.StatusCode(401)
+			ctx.StopExecution()
 			return
 		}
 		ctx.Redirect("/login")

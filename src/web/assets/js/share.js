@@ -1,27 +1,19 @@
-//the frontend chunksize must equal backend chunksize
-var ChunkSize = 4*1024*1024
 
 Vue.prototype.$axios = axios
 var vm =new Vue({
     delimiters: ['$', '$'],//use the '$$' delimiters,because the '{{' confilct with 'iris' mvc
     el: '#app',
     data:{
-        tableheight:"auto",
-        tableData: [],
-        multipleSelection: [],
-        uploadTableData:[],
-        drawer:false,
-        curRightRow:{},
-        parentDir:0,
-        dialogFormVisible:false,
-        dir_name:"",
-        DeletedialogVisible:false,
-        NavArray:[{
-            "ID":0,
-            "FileName":"首页"
-        }],
-        newFileName:"",
-        newFileNameDialogFormVisible:false,
+        file_status:0,
+        share_pwd:'',
+        need_pwd:1,
+        share_id:'',
+        show_content:0,
+        is_dir:0,
+        share_time:"",
+        create_time:"",
+        file_name:"",
+        cur_file:{},
         moveFileDialogFormVisible:false,
         moveFileData:[],
         moveFileTreeDefaultExpanded:[],
@@ -29,21 +21,51 @@ var vm =new Vue({
             children: 'children',
             label: 'label'
         },
-        curMoveFileTreeSelected:{},
-        shareDialogFormVisible:false,
-        shareForm: {
-            name: '分享文件(夹):',
-            expdate: '7',
-            haspwd: true,
-            pwd: '',
-            link: ''
-        },
-        share:{
-            tableData:[]
-        }
 
     },
     methods: {
+        was_login(){
+            return username.length >0
+        },
+        onValid(){
+            form = new FormData()
+            form.append("share_id",this.share_id)
+            form.append("pwd",this.share_pwd)
+
+            this.$axios.post("/share/valid",form)
+                .then(resp=>{
+                    if (resp.data.Status==0){
+                        ErrMsg(resp.data.Msg)
+                        return
+                    }
+                    this.show_content = 1
+                    if(resp.data.Data.IsDir==0){
+                        //is file,show
+                        this.is_dir = 0
+                        this.create_time = resp.data.Data.CreateAt
+                        this.file_name = resp.data.Data.FileName
+                        this.cur_file = resp.data.Data
+                        if (resp.data.Data.ShareTime==1){
+                            this.share_time = "1 天"
+
+                        }else if(resp.data.Data.ShareTime==7){
+                            this.share_time = "7 天"
+
+                        }else {
+                            this.share_time = "永久"
+                        }
+
+                    }else {
+                        //is dir
+                        //to get the dir content
+                        this.is_dir = 1
+
+                    }
+
+                }).catch(err=>{
+                    ErrMsg(err)
+            })
+        },
         mouseleftclick(){
             var menu = document.querySelector("#context-menu");
             menu.style.display = 'none';
@@ -194,14 +216,14 @@ var vm =new Vue({
             menu.style.display = 'block';
         },
         fileDownload(){
-            RightMenuDisplayNone()
-            if (this.curRightRow.IsDir==1){
+
+            if (this.cur_file.IsDir==1){
                 ErrMsg("暂不支持文件夹下载功能")
                 return
             }
             try {
                 var elemIF = document.createElement("iframe");
-                elemIF.src = "/file/downloadfile/"+this.curRightRow.FileName+"?fileqetag="+this.curRightRow.FileQetag;
+                elemIF.src = "/share/downloadfile/"+this.cur_file.FileName+"?share_id="+this.cur_file.ShareId+"&share_pwd="+this.share_pwd;
                 elemIF.style.display = "none";
                 document.body.appendChild(elemIF);
             } catch (e) {
@@ -239,8 +261,8 @@ var vm =new Vue({
             })
         },
         preOnMoveFile(){
-            RightMenuDisplayNone()
-            this.$axios.get("/file/userdirs/"+this.curRightRow.ID).
+
+            this.$axios.get("/file/userdirs/"+this.cur_file.UserFileId).
             then(resp=>{
                 if (resp.data.Status ==1){
                     console.log(resp.data.Data)
@@ -264,41 +286,47 @@ var vm =new Vue({
         OnMoveFile(){
             this.moveFileDialogFormVisible=false
             data =new FormData()
-            data.append("id",this.curRightRow.ID)
+            data.append("share_id",this.share_id)
+            data.append("share_pwd",this.share_pwd)
             data.append("dir",this.curMoveFileTreeSelected)
 
-            this.$axios.post("/file/movefile",data).
+            this.$axios.post("/share/savefile",data).
             then(resp=>{
                 if (resp.data.Status ==1){
-                    GetFiles(this.parentDir)
+                    vm.$message({
+                        message: "文件保存成功",
+                        type: 'success',
+                        offset: 100
+                    });
                 }else {
                     ErrMsg(resp.data.Msg)
                 }
             })
-        },
-        moveFileFilterNode(value, data){
-            if (data.id==value){
-                return false
-            }
-            return true
-        },
-        preShareFile(){
-            RightMenuDisplayNone()
-            this.shareForm.pwd = randomCode()
-            this.shareForm.link = window.location.href+"share/"+this.curRightRow.FileQetag
-            this.shareDialogFormVisible = true
-            this.shareForm.name='分享文件(夹): '+this.curRightRow.FileName
-        },
-        OnShareFile(){
-
         }
-
-
     },
     created: function () {
         window.addEventListener('resize', this.getHeight);
         this.getHeight()
-        GetFiles(0)
+        this.share_id = document.querySelector("#share_id").value
+        if (this.share_id.length==0){
+            return
+        }
+        this.$axios.get("/share/file/"+this.share_id).
+            then(resp=>{
+                if (resp.data.Status ==1){
+                    this.file_status = 1
+                    if(resp.data.Data.pwd==1){
+                        this.need_pwd = 1
+                    }else {
+                        this.need_pwd = 0
+                    }
+                }else{
+                    //file status err
+                    this.file_status = 0
+            }
+        }).catch(err=>{
+            ErrMsg(err)
+        })
 
 
     },
@@ -338,6 +366,7 @@ function GetFiles(p) {
     })
 }
 
+
 function RightMenuDisplayNone() {
     document.querySelector("#context-menu").style.display = 'none';
 }
@@ -349,248 +378,3 @@ function ErrMsg(msg) {
         offset: 100
     });
 }
-
-//ref :https://blog.csdn.net/qq_34292479/article/details/87621491
-function randomCode(){
-    var arr = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','0','1','2','3','4','5','6','7','8','9'];
-    var idvalue ='';
-    var n = 4;
-    for(var i=0;i<n;i++){
-        idvalue+=arr[Math.floor(Math.random()*62)];
-    }
-    return idvalue;
-}
-
-
-
-
-var flow = new Flow({
-    target:'/file/upload',
-    query:function (file, chunk, isTest) {
-        return{
-            'qetag':file.qetag
-        }
-    },
-    chunkSize:ChunkSize,
-    testChunks: false,
-    headers:{'X-Requested-With':'XMLHttpRequest'}
-
-});
-
-// Flow.js isn't supported
-if(!flow.support) {
-    ErrMsg("上传插件不支持，请更换浏览器")
-
-
-}
-
-flow.assignBrowse(document.getElementById('browseButton'));
-
-
-flow.on('fileAdded', function(file, event){
-    if (vm.$data.drawer !=true){
-        vm.$data.drawer =true
-    }
-
-    file.curprogress = 0
-    file.uploadstatus = ''
-    file.isSecond = 0
-    vm.uploadTableData.push(file)
-    get_qetag_and_upload(file)
-});
-flow.on('filesSubmitted', function(file, event){
-
-});
-
-flow.on('fileSuccess', function(file,message,chunk){
-    //console.log("upload succ:"+file)
-    var bodyFormData =new FormData()
-    bodyFormData.append("qetag",file.qetag)
-    bodyFormData.append("flowIdentifier",file.uniqueIdentifier)
-    bodyFormData.append("flowTotalChunks",file.chunks.length)
-    bodyFormData.append("fileSize",file.size)
-    bodyFormData.append("fileName",file.name)
-    bodyFormData.append("fileExt",file.name.split('.')[file.name.split('.').length-1])
-    bodyFormData.append("parentDir",vm.$data.parentDir)
-    axios({
-        method: 'post',
-        url: '/file/uploadfinshed',
-        data: bodyFormData,
-        headers: {'Content-Type': 'multipart/form-data'}
-    }). then(response=> {
-        console.log(response.data)
-        if (parseInt(response.data.Status) ==1){
-            file.uploadstatus="success"
-            GetFiles()
-        }else {
-            file.uploadstatus="exception"
-        }
-    })
-
-
-});
-
-flow.on('fileProgress',function (file, chunk) {
-    file.curprogress =Math.ceil( file.progress()*100)
-})
-
-flow.on('fileError', function(file, message,chunk){
-    if (401 === chunk.xhr.status) {
-        window.location = '/login';
-    }else {
-        ErrMsg("error:"+chunk.xhr.status)
-
-    }
-
-});
-
-
-
-//qetag offical:https://github.com/qiniu/qetag
-//get_qetag_and_upload ,custom function to get qetag ,then upload file
-//custom the qetag function by flow.js
-// sha1算法
-var shA1 =  sha1.digest;
-function get_qetag_and_upload(file) {
-    var prefix = 0x16;
-    var sha1String = [];
-
-    var blockSize = ChunkSize;
-    var blockCount = 0;
-    var chunkIndex = 0
-
-
-    function SetSha1StringArry(chunk) {
-
-        var fileObj = chunk.fileObj
-        var blob = webAPIFileRead(fileObj,chunk.startByte,chunk.endByte,fileObj.file.type)
-        blob.arrayBuffer().then(function (buffer) {
-            if (buffer == blockSize){
-                sha1String.push(shA1(buffer));
-            }else {
-                var bufferSize = buffer.size || buffer.length || buffer.byteLength;
-                blockCount = Math.ceil(bufferSize / blockSize);
-                for (var i = 0; i < blockCount; i++) {
-                    //sha1beginTime = +new Date();
-                    sha1String.push(shA1(buffer.slice(i * blockSize, (i + 1) * blockSize)));
-                    //var sha1endTime = +new Date();
-                    //sha1CostTime +=sha1endTime-sha1beginTime
-
-
-                }
-            }
-
-            chunkIndex++
-            if (chunkIndex < file.chunks.length){
-                //Forced synchronous execution to prevent qetag errors
-                //TODO: can be optimized
-                SetSha1StringArry(file.chunks[chunkIndex])
-
-            }else {
-                //to calc
-                calcEtag(sha1String,file)
-                //console.log("sha1共用时"+sha1CostTime+"ms");
-            }
-        })
-
-    }
-    // copy and modify by flow.js
-    function webAPIFileRead(fileObj, startByte, endByte, fileType) {
-        var function_name = 'slice';
-
-        if (fileObj.file.slice)
-            function_name =  'slice';
-        else if (fileObj.file.mozSlice)
-            function_name = 'mozSlice';
-        else if (fileObj.file.webkitSlice)
-            function_name = 'webkitSlice';
-
-        return (fileObj.file[function_name](startByte, endByte, fileType));
-    }
-
-    SetSha1StringArry(file.chunks[chunkIndex])
-    // for (var i=0; i< file.chunks.length ;i++){
-    //     SetSha1StringArry(file.chunks[i])
-    // }
-    //return (calcEtag());
-}
-
-function calcEtag(sha1,file) {
-    var prefix = 0x16;
-    var sha1String = sha1;
-
-
-    function concatArr2Uint8(s) {//Array 2 Uint8Array
-        var tmp = [];
-        for (var i of s) tmp = tmp.concat(i);
-        return new Uint8Array(tmp);
-    }
-    function Uint8ToBase64(u8Arr, urisafe) {//Uint8Array 2 Base64
-        var CHUNK_SIZE = 0x8000; //arbitrary number
-        var index = 0;
-        var length = u8Arr.length;
-        var result = '';
-        var slice;
-        while (index < length) {
-            slice = u8Arr.subarray(index, Math.min(index + CHUNK_SIZE, length));
-            result += String.fromCharCode.apply(null, slice);
-            index += CHUNK_SIZE;
-        }
-        return urisafe ? btoa(result).replace(/\//g, '_').replace(/\+/g, '-') : btoa(result);
-    }
-    function calcEtag() {
-        if (!sha1String.length) return 'Fto5o-5ea0sNMlW_75VgGJCv2AcJ';
-        var sha1Buffer = concatArr2Uint8(sha1String);
-        // 如果大于4M，则对各个块的sha1结果再次sha1
-        // ChunkSize = 4M
-        if (file.size > ChunkSize) {
-            prefix = 0x96;
-            sha1Buffer = shA1(sha1Buffer.buffer);
-        } else {
-            sha1Buffer = Array.apply([], sha1Buffer);
-        }
-        sha1Buffer = concatArr2Uint8([[prefix], sha1Buffer]);
-        var _base64 =Uint8ToBase64(sha1Buffer, true);
-
-        //console.log("_base64 :"+_base64)
-        return _base64
-    }
-    var qetag = calcEtag()
-    file.qetag = qetag
-    uploadfile(file)
-}
-
-function uploadfile(file) {
-
-    fileSecondsPass(function (succ) {
-        if (!succ){
-            flow.upload()
-        }else {
-            //the seconds pass succ
-            file.isSecond = 1
-            file.cancel()
-            GetFiles(vm.$data.parentDir)
-        }
-    },file)
-
-}
-//fileSecondsPass if can seconds-pass return true,else false
-function fileSecondsPass(f,file) {
-    var bodyFormData =new FormData()
-    bodyFormData.append("qetag",file.qetag)
-    bodyFormData.append("fileName",file.name)
-    bodyFormData.append("parentDir",vm.$data.parentDir)
-    axios.post("/file/filesecondspass",bodyFormData)
-        .then(resp=>{
-            if (parseInt(resp.data.Status)==1){
-                f(true)
-            }else {
-                f(false)
-            }
-        }).catch(err=>{
-            f(false)
-    })
-
-}
-
-

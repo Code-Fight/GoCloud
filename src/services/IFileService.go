@@ -2,22 +2,27 @@ package services
 
 import (
 	"errors"
+	"gocloud/common"
 	"gocloud/dao"
 	"gocloud/datamodels"
+	"math/big"
 )
 
 type IFileService interface {
 	GetFileMeta(fileqetag string) (file *datamodels.FileModel,err error)
 	AddFile(fileqetag string, filename string, filesize int64, fileaddr string) (succ bool,err error)
-	QueryUserFils(username string,parent_dir ,status int64) (userfile []datamodels.UserFile, err error)
+	QueryUserFils(username string,parent_dir ,status int64) (userfile []datamodels.UserFileModel, err error)
+	GetUserFileByID(id int64) (userfile *datamodels.UserFileModel, err error)
 	AddUserFileRelation(username, fileqetag, filename,fileaddr string, filesize ,is_dir,parent_dir int64) (succ bool,err error)
 	DeleteFile(username, fileqetag string,parent_id int64)(succ bool,err error)
 	UpdateUserFileName(id int64,name string)(succ bool,err error)
 	GetUserDirByUser(user_name string,ignoreNode int)(dirs *[]map[string]interface{},err error)
 	MoveFileTo(id, parent_dir int64) ( bool,  error)
 
-	CreateShareFile(qetag, pwd string) (succ bool, err error)
+	CreateShareFile(user_file_id,share_id int64, pwd string)  (share_link string,succ bool, err error)
 	QueryShareFileBy(qetag string) (share *datamodels.FileShareModel, err error)
+	QueryShareFileAndValid(share_id,pwd string) (share *datamodels.FileShareModel, err error)
+	QueryUserShareFileBy(share_id string) (share *datamodels.UserFileShareModel, err error)
 }
 
 type fileService struct {
@@ -34,9 +39,14 @@ func (this *fileService) GetFileMeta(fileqetag string) (file *datamodels.FileMod
 func (this *fileService) AddFile(fileqetag string, filename string, filesize int64, fileaddr string) (succ bool,err error){
 	return this.dao.InsertFile(fileqetag,filename,filesize,fileaddr)
 }
-func (this *fileService) QueryUserFils(username string,parent_dir ,status int64) (userfile []datamodels.UserFile, err error) {
+func (this *fileService) QueryUserFils(username string,parent_dir ,status int64) (userfile []datamodels.UserFileModel, err error) {
 	return this.dao.SelectUserFiles(username,parent_dir,status)
 }
+
+func (this *fileService) GetUserFileByID(id int64) (userfile *datamodels.UserFileModel, err error){
+	 return this.dao.SelectUserFilesByID(id)
+}
+
 func (this *fileService) AddUserFileRelation(username, fileqetag, filename,fileaddr string, filesize,is_dir,parent_dir int64) (succ bool,err error){
 
 	// if the file was deleted,we only need to do confirm and update the file status
@@ -86,15 +96,50 @@ func (this *fileService)  MoveFileTo(id, parent_dir int64) ( bool,  error) {
 }
 
 
-func (this *fileService)  CreateShareFile(qetag, pwd string) (succ bool, err error){
-	return this.dao.InsertShareFile(qetag,pwd)
+func (this *fileService)  CreateShareFile(user_file_id ,share_time int64, pwd string) (share_link string,succ bool, err error){
+	id,err := this.dao.InsertShareFile(user_file_id,share_time,pwd)
+	if err!=nil{
+		return "",false,err
+	}
+	share_link =big.NewInt(id).Text(62)
+	succ,err = this.dao.UpdateShareFileShareID(id,share_link)
+	if !succ||err!=nil{
+		return "",false,err
+	}
+	return
+
 }
-func (this *fileService)  QueryShareFileBy(qetag string) (share *datamodels.FileShareModel, err error){
-	return this.dao.SelectShareFileBy(qetag)
+
+func (this *fileService)  QueryShareFileBy(share_id string) (share *datamodels.FileShareModel, err error){
+	return this.dao.SelectShareFileBy(share_id)
+}
+
+func (this *fileService)  QueryUserShareFileBy(share_id string) (share *datamodels.UserFileShareModel, err error){
+	return this.dao.SelectShareFileAndUserFile(share_id)
+}
+
+func (this *fileService)  QueryShareFileAndValid(share_id,pwd string) (share *datamodels.FileShareModel, err error){
+	share ,err = this.dao.SelectShareFileBy(share_id)
+
+	if err!=nil{
+		return nil, err
+	}
+
+	if len(pwd)>0{
+		pwd = common.Sha1([]byte(pwd+common.User_Pwd_Sha1_Salt))
+	}
+
+	if pwd !=share.SharePwd{
+		return nil,errors.New("the share password invalid")
+	}
+
+
+	return share,nil
 }
 
 
-func createTree(tree *[]map[string]interface{},dirs []datamodels.UserFile,nodes  []datamodels.UserFile,ignoreNode int)  {
+
+func createTree(tree *[]map[string]interface{},dirs []datamodels.UserFileModel,nodes  []datamodels.UserFileModel,ignoreNode int)  {
 
 	for _,v :=range nodes{
 		if v.ID == ignoreNode {
@@ -115,8 +160,8 @@ func createTree(tree *[]map[string]interface{},dirs []datamodels.UserFile,nodes 
 
 }
 
-func getNode(data []datamodels.UserFile,parent_id int64) []datamodels.UserFile {
-	temp :=[]datamodels.UserFile{}
+func getNode(data []datamodels.UserFileModel,parent_id int64) []datamodels.UserFileModel {
+	temp :=[]datamodels.UserFileModel{}
 	for _,v :=range data{
 		if v.ParentDir == parent_id{
 			temp = append(temp, v)

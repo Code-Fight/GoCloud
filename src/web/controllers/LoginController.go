@@ -93,6 +93,7 @@ func (this *LoginController) PostSignup()  {
 // GetLogout the user loguout
 func (this *LoginController) GetLogout() {
 	sessions.Get(this.Ctx).Set("authenticated",false)
+	sessions.Get(this.Ctx).Clear()
 	this.Ctx.JSON(datamodels.RespModel{
 		Status: 0,
 		Msg: "OK",

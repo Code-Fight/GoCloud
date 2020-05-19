@@ -6,7 +6,7 @@ import (
 )
 
 func TestCreateTree(t *testing.T) {
-	user_dir := []datamodels.UserFile{
+	user_dir := []datamodels.UserFileModel{
 		{FileName: "1",IsDir: 1,ID: 1,ParentDir: 0},
 		{FileName: "2",IsDir: 1,ID: 2,ParentDir: 0},
 		{FileName: "3",IsDir: 1,ID: 3,ParentDir: 0},

@@ -1,8 +1,6 @@
 //the frontend chunksize must equal backend chunksize
 var ChunkSize = 4*1024*1024
 
-var beginTime
-var sha1CostTime =0
 Vue.prototype.$axios = axios
 var vm =new Vue({
     delimiters: ['$', '$'],//use the '$$' delimiters,because the '{{' confilct with 'iris' mvc
@@ -38,11 +36,13 @@ var vm =new Vue({
             expdate: '7',
             haspwd: true,
             pwd: '',
-            link: ''
+            link: '',
+            share_copy_text:''
         },
         share:{
             tableData:[]
-        }
+        },
+        createShareButtonText:"创建链接"
 
     },
     methods: {
@@ -285,13 +285,45 @@ var vm =new Vue({
             return true
         },
         preShareFile(){
+            if(this.curRightRow.IsDir==1){
+                ErrMsg("抱歉，暂时不支持文件夹分享")
+                return
+            }
+            this.createShareButtonText="创建链接"
             RightMenuDisplayNone()
             this.shareForm.pwd = randomCode()
-            this.shareForm.link = window.location.href+"share/"+this.curRightRow.FileQetag
+            this.shareForm.link = ""
             this.shareDialogFormVisible = true
             this.shareForm.name='分享文件(夹): '+this.curRightRow.FileName
         },
         OnShareFile(){
+
+            if(this.shareForm.link.length>0){
+
+
+                this.shareForm.share_copy_text="打开链接:"+this.shareForm.link+"  密码:"+this.shareForm.pwd +" 查看我分享给你的文件。"
+
+
+            }else {
+                data = new FormData()
+                data.append("user_file_id",this.curRightRow.ID)
+                data.append("share_pwd",this.shareForm.pwd)
+                data.append("share_time",this.shareForm.expdate)
+
+
+                this.$axios.post("/share/createshare",data)
+                    .then(resp=>{
+                        if (resp.data.Status ==1){
+                            this.shareForm.link =window.location.href+"share/"+resp.data.Data.link
+                            this.createShareButtonText="复制链接"
+                        }else {
+                            ErrMsg(resp.data.Msg)
+                        }
+                    }).catch(err=>{
+                    ErrMsg(err)
+                })
+            }
+
 
         }
 

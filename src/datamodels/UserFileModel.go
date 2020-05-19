@@ -1,6 +1,6 @@
 package datamodels
 
-type UserFile struct {
+type UserFileModel struct {
 	ID          int    `sql:"id"`
 	UserName    string `sql:"user_name"`
 	FileQetag   string `sql:"file_qetag"`

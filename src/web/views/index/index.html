@@ -1,4 +1,8 @@
-<el-container style="border: 1px solid #eee"  >
+<div id="app" style="height: 100vh;display: flex" v-cloak>
+
+
+
+<el-container style="border: 1px solid #eee"  v-cloak>
 
     <el-header style="text-align: left; font-size: 16px">
         <el-row type="flex">
@@ -61,7 +65,7 @@
             <el-row style="padding: 10px">
                 <el-col :span="24">
                     <el-button type="primary"  id="browseButton">
-                        <i style=";font-size: 17px" class="el-icon-upload"></i>
+                        <i style=";" class="el-icon-upload"></i>
                         上传</el-button>
                     <el-button type="primary" @click="dialogFormVisible = true" plain>新建文件夹</el-button>
 
@@ -114,7 +118,7 @@
     </el-container>
 </el-container>
 
-<el-drawer
+<el-drawer v-cloak
         title="文件上传列表"
         :visible.sync="drawer"
         :with-Header="false">
@@ -167,7 +171,7 @@
     </el-main>
 </el-drawer>
 
-<el-dialog title="目录名称" :close-on-click-modal=false width="400px" :visible.sync="dialogFormVisible">
+<el-dialog v-cloak title="目录名称" :close-on-click-modal=false width="400px" :visible.sync="dialogFormVisible">
     <el-form >
         <el-input v-model="dir_name" autocomplete="off"></el-input>
     </el-form>
@@ -177,7 +181,7 @@
     </div>
 </el-dialog>
 
-<el-dialog title="重命名" width="400px" :visible.sync="newFileNameDialogFormVisible">
+<el-dialog v-cloak title="重命名" width="400px" :visible.sync="newFileNameDialogFormVisible">
     <el-form >
         <el-input v-model="newFileName" autocomplete="off"></el-input>
     </el-form>
@@ -187,7 +191,7 @@
     </div>
 </el-dialog>
 
-<el-dialog title="提示"
+<el-dialog v-cloak title="提示"
         :visible.sync="DeletedialogVisible"
         width="400px">
     <span>确认删除？</span>
@@ -197,7 +201,7 @@
   </span>
 </el-dialog>
 
-<el-dialog title="移动文件到" width="400px" :visible.sync="moveFileDialogFormVisible" >
+<el-dialog v-cloak title="移动文件到" width="400px" :visible.sync="moveFileDialogFormVisible" >
 
     <el-scrollbar>
         <el-scrollbar style="border: #5b667b solid 1px; height: 400px">
@@ -223,7 +227,7 @@
     </div>
 </el-dialog>
 
-<el-dialog :title="shareForm.name" width="500px" :visible.sync="shareDialogFormVisible">
+<el-dialog v-cloak :title="shareForm.name" width="500px" :visible.sync="shareDialogFormVisible">
     <el-form :model="shareForm" label-width="80px">
 
         <el-form-item style="width: 200px;"  label="有 效 期">
@@ -242,7 +246,7 @@
             <el-input  style="width: 120px;" v-model="shareForm.pwd" width="200px"></el-input>
         </el-form-item>
 
-        <el-form-item label="分享链接">
+        <el-form-item v-if="shareForm.link.length>0" label="分享链接">
             <el-input v-model="shareForm.link" width="200px"></el-input>
         </el-form-item>
 
@@ -254,11 +258,15 @@
 
     <div slot="footer" class="dialog-footer">
         <el-button @click="shareDialogFormVisible = false">取 消</el-button>
-        <el-button type="primary" @click="OnShareFile">创建链接</el-button>
+        <el-button v-if="!(this.shareForm.link.length>0)" @click="OnShareFile" type="primary"  >创建链接</el-button>
+
+        <button v-if="this.shareForm.link.length>0" class="btn" :data-clipboard-text="shareForm.share_copy_text">
+            复制链接
+        </button>
     </div>
 </el-dialog>
 
-<div id="context-menu" class="context-menu" style="display: none">
+<div v-cloak id="context-menu" class="context-menu" style="display: none">
     <ul class="list" style="z-index: 100;  display: block;">
 
         <li  @click="fileDownload" class="" style="display: block;">下载</li>
@@ -273,3 +281,8 @@
         </li>
     </ul>
 </div>
+
+
+</div>
+
+<script src="/assets/js/app.js"></script>
