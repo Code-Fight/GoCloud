@@ -301,7 +301,6 @@ var vm =new Vue({
             if(this.shareForm.link.length>0){
 
 
-                this.shareForm.share_copy_text="打开链接:"+this.shareForm.link+"  密码:"+this.shareForm.pwd +" 查看我分享给你的文件。"
 
 
             }else {
@@ -315,7 +314,8 @@ var vm =new Vue({
                     .then(resp=>{
                         if (resp.data.Status ==1){
                             this.shareForm.link =window.location.href+"share/"+resp.data.Data.link
-                            this.createShareButtonText="复制链接"
+                            this.shareForm.share_copy_text="打开链接:"+this.shareForm.link+"  密码:"+this.shareForm.pwd +" 查看我分享给你的文件。"
+                            this.shareDialogFormVisible = true
                         }else {
                             ErrMsg(resp.data.Msg)
                         }

@@ -227,7 +227,7 @@
     </div>
 </el-dialog>
 
-<el-dialog v-cloak :title="shareForm.name" width="500px" :visible.sync="shareDialogFormVisible">
+<el-dialog v-cloak :title="shareForm.name" width="500px" :close-on-click-modal=false :visible.sync="shareDialogFormVisible">
     <el-form :model="shareForm" label-width="80px">
 
         <el-form-item style="width: 200px;"  label="有 效 期">
@@ -260,7 +260,7 @@
         <el-button @click="shareDialogFormVisible = false">取 消</el-button>
         <el-button v-if="!(this.shareForm.link.length>0)" @click="OnShareFile" type="primary"  >创建链接</el-button>
 
-        <button v-if="this.shareForm.link.length>0" class="btn" :data-clipboard-text="shareForm.share_copy_text">
+        <button v-else class="copybtn el-button el-button--primary"  >
             复制链接
         </button>
     </div>
@@ -284,5 +284,32 @@
 
 
 </div>
+<script src="/assets/libs/clipboard/clipboard.js"></script>
 
 <script src="/assets/js/app.js"></script>
+
+
+<script>
+
+    clipboard = new ClipboardJS('.copybtn', {
+        text: function(a) {
+
+            return  vm.$data.shareForm.share_copy_text;
+        }
+    });
+
+    clipboard.on('success', function(e) {
+        vm.$data.shareDialogFormVisible = false
+        vm.$message({
+            message:"复制成功，快去分享吧",
+            type: 'success',
+            offset: 100
+        });
+    });
+
+    clipboard.on('error', function(e) {
+       ErrMsg(e)
+    });
+
+
+</script>
