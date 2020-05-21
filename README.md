@@ -9,4 +9,16 @@
 4. 支持文件分享，以及安全验证，轻松分享自己的资源
 4. 后端存储OSS(阿里云)、KODO(七牛云)、Ceph(私有分布式/aws)等
 
+## 使用docker运行
+
+mac OS, Linux 在根目录下运行
+```
+$ ./start.sh
+```
+
+Windows 在根目录下运行
+```
+$ start.sh
+```
+
 
