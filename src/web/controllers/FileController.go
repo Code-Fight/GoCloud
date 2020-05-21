@@ -414,3 +414,31 @@ func (this *FileController) PostMovefile() {
 
 
 }
+
+
+func (this *FileController) GetUsersharefilesBy(user_name string){
+	if len(user_name)==0{
+		this.Ctx.JSON(datamodels.RespModel{
+			Status: 0,
+			Msg:    "Invalid user name",
+		})
+		return
+	}
+
+	files,err := this.Service.QueryUserShareFiles(user_name)
+
+	if err!=nil{
+		this.Ctx.JSON(datamodels.RespModel{
+			Status: 0,
+			Msg:    err.Error(),
+		})
+		return
+	}
+
+
+	this.Ctx.JSON(datamodels.RespModel{
+		Status: 1,
+		Msg:    "OK",
+		Data: files,
+	})
+}

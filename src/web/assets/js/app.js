@@ -7,6 +7,7 @@ var vm =new Vue({
     el: '#app',
     data:{
         tableheight:"auto",
+        shareTableHeight:"auto",
         tableData: [],
         multipleSelection: [],
         uploadTableData:[],
@@ -42,7 +43,9 @@ var vm =new Vue({
         share:{
             tableData:[]
         },
-        createShareButtonText:"创建链接"
+        createShareButtonText:"创建链接",
+        mainMenuIndex:1,
+        shareTableData:[],
 
     },
     methods: {
@@ -53,6 +56,9 @@ var vm =new Vue({
         },
         getHeight(){
             this.tableheight=window.innerHeight-121.511+'px';  //获取浏览器高度减去顶部导航栏
+            this.shareTableHeight=window.innerHeight-60.511+'px';  //获取浏览器高度减去顶部导航栏
+
+
         },
         handleSelectionChange(val) {
             this.multipleSelection = val;
@@ -82,6 +88,17 @@ var vm =new Vue({
                 console.log(err)
             })
         },
+        table_expdate_formatter(row, column){
+            if (row.ShareTime==1){
+                return "1 天"
+
+            }else if(row.ShareTime==7){
+                return "7 天"
+
+            }else if(row.ShareTime==0){
+                return "永久"
+            }
+        },
         table_silze_formatter(row, column){
             if (parseInt(row.FileSize) == 0){
                 return ''
@@ -99,8 +116,8 @@ var vm =new Vue({
             }
         },
         table_date_formatter(row, column){
-            _obj  = row.LastUpdated.toString().split(':')
-            return  row.LastUpdated.toString().replace(":"+_obj[_obj.length-1],"")
+            _obj  = row[column.property].toString().split(':')
+            return  row[column.property].toString().replace(":"+_obj[_obj.length-1],"")
         },
         fileOnclick(data){
            if (data.row.IsDir){
@@ -139,8 +156,8 @@ var vm =new Vue({
 
 
         },
-        allfile(index,indexPath){
-
+        menuSelected(index,indexPath){
+            this.mainMenuIndex = index
             if(index==1){
                 this.NavArray =[{
                     "ID":0,
@@ -148,6 +165,22 @@ var vm =new Vue({
                 }]
                 this.parentDir = 0
                 GetFiles(0)
+            }else if(index==2){
+
+                this.$axios.get("/file/usersharefiles/"+username)
+                    .then(resp=>{
+                        if (resp.data.Status ==1){
+                            this.shareTableData = resp.data.Data
+                        }else {
+                            ErrMsg(err)
+                        }
+                    })
+                    .catch(err=>{
+                        ErrMsg(err)
+                    })
+
+            }else if(index==3){
+
             }
 
 
@@ -330,6 +363,7 @@ var vm =new Vue({
 
     },
     created: function () {
+        this.mainMenuIndex=1
         window.addEventListener('resize', this.getHeight);
         this.getHeight()
         GetFiles(0)

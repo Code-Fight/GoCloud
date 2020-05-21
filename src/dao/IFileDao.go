@@ -29,6 +29,7 @@ type IFileDao interface {
 	UpdateShareFileShareID(id int64, share_id string) (succ bool, err error)
 	SelectShareFileBy(share_id string) (share *datamodels.FileShareModel, err error)
 	SelectShareFileAndUserFile(share_id string) (share *datamodels.UserFileShareModel, err error)
+	SelectUserShareFiles(user_name string) (share []datamodels.UserFileShareModel, err error)
 }
 
 type fileDao struct {
@@ -430,6 +431,49 @@ func (this *fileDao) SelectShareFileAndUserFile(share_id string) (share *datamod
 	common.DataToStructByTagSql(result,userfile)
 	share.FileShareModel = *fileshare
 	share.UserFileModel = *userfile
+
+
+	return share,nil
+}
+
+func (this *fileDao) SelectUserShareFiles(user_name string) (share []datamodels.UserFileShareModel, err error){
+	if err = this.Conn(); err != nil {
+		return
+	}
+	stmt, err :=this.mysqlConn.Prepare(
+		" select tbl_user_file.file_name,tbl_user_file.is_dir,tbl_user_share_file.* from tbl_user_share_file " +
+			" left join tbl_user_file  on tbl_user_share_file.user_file_id=tbl_user_file.id " +
+			" where tbl_user_file.user_name = ?")
+	if err != nil {
+		fmt.Println("Failed to prepare statement,err:" + err.Error())
+		return nil,err
+	}
+	defer stmt.Close()
+	row, err := stmt.Query(user_name)
+	if err != nil {
+		fmt.Println(err.Error())
+		return nil,err
+	}
+
+
+	result := common.GetResultRows(row)
+	if len(result) == 0 {
+		return nil, err
+	}
+
+	share =[]datamodels.UserFileShareModel{}
+
+
+	for _,v :=range result{
+		share_temp :=&datamodels.UserFileShareModel{}
+		fileshare :=&datamodels.FileShareModel{}
+		common.DataToStructByTagSql(v,fileshare)
+		userfile :=&datamodels.UserFileModel{}
+		common.DataToStructByTagSql(v,userfile)
+		share_temp.FileShareModel = *fileshare
+		share_temp.UserFileModel = *userfile
+		share = append(share, *share_temp)
+	}
 
 
 	return share,nil

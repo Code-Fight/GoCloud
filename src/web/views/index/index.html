@@ -34,7 +34,7 @@
 
     <el-container >
         <el-aside width="200px" style="background-color: rgb(238, 241, 246);">
-            <el-menu @select="allfile" background-color=" rgb(238, 241, 246)">
+            <el-menu @select="menuSelected" background-color=" rgb(238, 241, 246)">
                 <el-menu-item  index="1">
                     <i class="el-icon-folder-opened"></i>
                     <span slot="title">全部文件</span>
@@ -54,8 +54,8 @@
             </el-menu>
         </el-aside>
 
-
-        <el-main style="padding: 0px;" >
+        <!--file main-->
+        <el-main v-if="(mainMenuIndex==1)" style="padding: 0px;" >
 
             <el-row style="padding: 10px">
                 <el-col :span="24">
@@ -80,11 +80,7 @@
 
             </el-row>
 
-
-
-
-
-            <el-table :height="tableheight" ref="multipleTable" :data="tableData" style="width: 100%;font-size: 13px"
+            <el-table key="fileTable" :height="tableheight" ref="multipleTable" :data="tableData" style="width: 100%;font-size: 13px"
                       @selection-change="handleSelectionChange"
                       @row-contextmenu = "row_contextmenu"
                       @row-click="mouseleftclick"
@@ -93,6 +89,8 @@
 
                 <el-table-column type="selection" width="55">
                 </el-table-column>
+
+
 
                 <el-table-column sortable prop="FileName" label="文件名">
                     <template  slot-scope="temp">
@@ -110,6 +108,63 @@
             </el-table>
             <el-button  @click="drawer = true"  style="position: fixed;bottom: 20px;right: 20px;font-size: 20px;font-weight: 700" type="primary"  icon="el-icon-upload2" circle></el-button>
         </el-main>
+
+        <!--file share-->
+        <el-main v-if="(mainMenuIndex==2)" style="padding: 0px;" >
+
+
+
+
+            <el-table  key="shareTable"  :height="shareTableHeight" :data="shareTableData" style="width: 100%;font-size: 13px"
+                       :default-sort = "{prop: 'FileName', order: 'descending'}"
+            >
+
+                <el-table-column type="expand">
+                    <template slot-scope="props">
+                        <el-form label-position="left" inline class="demo-table-expand">
+                            <el-form-item style="width:400px" label="分享链接">
+                                <span style="width: 400px">$ props.row.ShareId $</span>
+                            </el-form-item>
+                            <el-form-item style="width:200px" label="密码">
+                                <span>$ props.row.ShareId $</span>
+                            </el-form-item>
+                            <el-form-item style="width:200px"  style="text-align: right">
+                                <el-button
+                                        size="mini"
+                                        >复制链接</el-button>
+                                <el-button
+                                        size="mini"
+                                        >取消分享</el-button>
+                            </el-form-item>
+
+                        </el-form>
+                    </template>
+                </el-table-column>
+
+
+
+                <el-table-column  prop="FileName" label="文件名">
+                    <template  slot-scope="temp">
+                        <i style="font-size: 22px;color: #3a8ee6;position: absolute" v-bind:class="[temp.row.IsDir ? 'el-icon-folder' : 'el-icon-document']"></i>
+                        <span  style="margin-left: 35px" >$temp.row.FileName$</span>
+                    </template>
+                </el-table-column>
+
+
+
+                <el-table-column  prop="CreateAt" label="日期" width="300" :formatter="table_date_formatter">
+                </el-table-column>
+
+
+                <el-table-column  prop="ShareTime" label="有效期" width="200" :formatter="table_expdate_formatter">
+                </el-table-column>
+            </el-table>
+
+        </el-main>
+
+
+
+
     </el-container>
 </el-container>
 

@@ -23,6 +23,7 @@ type IFileService interface {
 	QueryShareFileBy(qetag string) (share *datamodels.FileShareModel, err error)
 	QueryShareFileAndValid(share_id,pwd string) (share *datamodels.FileShareModel, err error)
 	QueryUserShareFileBy(share_id string) (share *datamodels.UserFileShareModel, err error)
+	QueryUserShareFiles(user_name string) (share []datamodels.UserFileShareModel, err error)
 }
 
 type fileService struct {
@@ -137,6 +138,10 @@ func (this *fileService)  QueryShareFileAndValid(share_id,pwd string) (share *da
 	return share,nil
 }
 
+func (this *fileService)  QueryUserShareFiles(user_name string) (share []datamodels.UserFileShareModel, err error){
+
+	return this.dao.SelectUserShareFiles(user_name)
+}
 
 
 func createTree(tree *[]map[string]interface{},dirs []datamodels.UserFileModel,nodes  []datamodels.UserFileModel,ignoreNode int)  {
@@ -169,4 +174,5 @@ func getNode(data []datamodels.UserFileModel,parent_id int64) []datamodels.UserF
 	}
 	return temp
 }
+
 
