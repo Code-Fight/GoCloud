@@ -4,7 +4,6 @@ import (
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/mvc"
 	"github.com/kataras/iris/v12/sessions"
-	"gocloud/common"
 	"gocloud/datamodels"
 	"gocloud/services"
 	"gocloud/web/middleware"
@@ -38,9 +37,7 @@ func (this *ShareController)PostCreateshare()  {
 		})
 		return
 	}
-	if len(share_pwd)>0{
-		share_pwd= common.Sha1([]byte(share_pwd+common.User_Pwd_Sha1_Salt))
-	}
+
 
 	link,succ,err:=this.Service.CreateShareFile(user_file_id,share_time,share_pwd)
 	if !succ||err!=nil{
@@ -148,9 +145,7 @@ func (this *ShareController) PostValid()   {
 		})
 		return
 	}
-	if len(pwd)>0{
-		pwd = common.Sha1([]byte(pwd+common.User_Pwd_Sha1_Salt))
-	}
+
 	usershare,err :=this.Service.QueryUserShareFileBy(share_id)
 	if err!=nil{
 		this.Ctx.JSON(datamodels.RespModel{
@@ -287,5 +282,30 @@ func (this *ShareController) PostSavefile() {
 		Status: 1,
 		Msg:    "OK",
 	})
+}
+
+
+func (this *ShareController) GetCancelshareBy(share_id string)  {
+	this.Ctx.Proceed (middleware.NewAuth())
+	if this.Ctx.IsStopped(){
+		return
+	}
+	//idInt, _:= strconv.ParseInt(id,10,0)
+
+	succ,err:=this.Service.CancelShareFile(share_id)
+
+	if !succ || err!=nil{
+		this.Ctx.JSON(datamodels.RespModel{
+			Status: 0,
+			Msg:    err.Error(),
+		})
+		return
+	}
+
+	this.Ctx.JSON(datamodels.RespModel{
+		Status: 1,
+		Msg:    "OK",
+	})
+
 }
 

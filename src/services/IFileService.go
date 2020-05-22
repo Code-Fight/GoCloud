@@ -2,7 +2,6 @@ package services
 
 import (
 	"errors"
-	"gocloud/common"
 	"gocloud/dao"
 	"gocloud/datamodels"
 	"math/big"
@@ -24,6 +23,7 @@ type IFileService interface {
 	QueryShareFileAndValid(share_id,pwd string) (share *datamodels.FileShareModel, err error)
 	QueryUserShareFileBy(share_id string) (share *datamodels.UserFileShareModel, err error)
 	QueryUserShareFiles(user_name string) (share []datamodels.UserFileShareModel, err error)
+	CancelShareFile(share_id string) (succ bool, err error)
 }
 
 type fileService struct {
@@ -126,10 +126,6 @@ func (this *fileService)  QueryShareFileAndValid(share_id,pwd string) (share *da
 		return nil, err
 	}
 
-	if len(pwd)>0{
-		pwd = common.Sha1([]byte(pwd+common.User_Pwd_Sha1_Salt))
-	}
-
 	if pwd !=share.SharePwd{
 		return nil,errors.New("the share password invalid")
 	}
@@ -141,6 +137,11 @@ func (this *fileService)  QueryShareFileAndValid(share_id,pwd string) (share *da
 func (this *fileService)  QueryUserShareFiles(user_name string) (share []datamodels.UserFileShareModel, err error){
 
 	return this.dao.SelectUserShareFiles(user_name)
+}
+
+func (this *fileService)  CancelShareFile(share_id string) (succ bool, err error){
+
+	return this.dao.DeleteShareFileByID(share_id)
 }
 
 

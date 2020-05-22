@@ -46,6 +46,7 @@ var vm =new Vue({
         createShareButtonText:"创建链接",
         mainMenuIndex:1,
         shareTableData:[],
+        appHost:""
 
     },
     methods: {
@@ -166,19 +167,7 @@ var vm =new Vue({
                 this.parentDir = 0
                 GetFiles(0)
             }else if(index==2){
-
-                this.$axios.get("/file/usersharefiles/"+username)
-                    .then(resp=>{
-                        if (resp.data.Status ==1){
-                            this.shareTableData = resp.data.Data
-                        }else {
-                            ErrMsg(err)
-                        }
-                    })
-                    .catch(err=>{
-                        ErrMsg(err)
-                    })
-
+                GetShareFiles()
             }else if(index==3){
 
             }
@@ -358,7 +347,20 @@ var vm =new Vue({
             }
 
 
+        },
+        cancelShare(props){
+            this.$axios.get("/share/cancelshare/"+props.row.ShareId)
+                .then(resp=>{
+                    if (resp.data.Status == 1){
+                        GetShareFiles()
+                    }else {
+                        ErrMsg(resp.data.Msg)
+                    }
+                }).catch(err=>{
+                    ErrMsg(err)
+            })
         }
+
 
 
     },
@@ -406,6 +408,24 @@ function GetFiles(p) {
     })
 }
 
+// get the share file
+function GetShareFiles() {
+    vm.$data.appHost = window.location.href+"share/"
+    axios.get("/file/usersharefiles/"+username)
+        .then(resp=>{
+            if (resp.data.Status ==1){
+                vm.$data.shareTableData = resp.data.Data
+            }else {
+                ErrMsg(err)
+            }
+        })
+        .catch(err=>{
+            ErrMsg(err)
+        })
+
+}
+
+
 function RightMenuDisplayNone() {
     document.querySelector("#context-menu").style.display = 'none';
 }
@@ -429,6 +449,19 @@ function randomCode(){
     return idvalue;
 }
 
+//ref: https://www.jb51.net/article/53061.htm
+function string62to10(number_code) {
+    var chars = '0123456789abcdefghigklmnopqrstuvwxyzABCDEFGHIGKLMNOPQRSTUVWXYZ',
+        radix = chars.length,
+        number_code = String(number_code),
+        len = number_code.length,
+        i = 0,
+        origin_number = 0;
+    while (i < len) {
+        origin_number += Math.pow(radix, i++) * chars.indexOf(number_code.charAt(len - i) || 0);
+    }
+    return origin_number;
+}
 
 
 

@@ -415,7 +415,6 @@ func (this *FileController) PostMovefile() {
 
 }
 
-
 func (this *FileController) GetUsersharefilesBy(user_name string){
 	if len(user_name)==0{
 		this.Ctx.JSON(datamodels.RespModel{
@@ -442,3 +441,4 @@ func (this *FileController) GetUsersharefilesBy(user_name string){
 		Data: files,
 	})
 }
+

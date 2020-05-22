@@ -113,8 +113,6 @@
         <el-main v-if="(mainMenuIndex==2)" style="padding: 0px;" >
 
 
-
-
             <el-table  key="shareTable"  :height="shareTableHeight" :data="shareTableData" style="width: 100%;font-size: 13px"
                        :default-sort = "{prop: 'FileName', order: 'descending'}"
             >
@@ -122,18 +120,15 @@
                 <el-table-column type="expand">
                     <template slot-scope="props">
                         <el-form label-position="left" inline class="demo-table-expand">
-                            <el-form-item style="width:400px" label="分享链接">
-                                <span style="width: 400px">$ props.row.ShareId $</span>
+                            <el-form-item label-width="90px" style="width:400px" label="分享链接：">
+                                <span style="width: 400px">$appHost + props.row.ShareId $</span>
                             </el-form-item>
-                            <el-form-item style="width:200px" label="密码">
-                                <span>$ props.row.ShareId $</span>
+                            <el-form-item label-width="60px" style="width:150px" label="密码：">
+                                <span>$ props.row.SharePwd $</span>
                             </el-form-item>
                             <el-form-item style="width:200px"  style="text-align: right">
-                                <el-button
-                                        size="mini"
-                                        >复制链接</el-button>
-                                <el-button
-                                        size="mini"
+                                <el-button type="danger" plain
+                                        size="mini" @click="cancelShare(props)"
                                         >取消分享</el-button>
                             </el-form-item>
 
@@ -342,8 +337,7 @@
 <script>
 
     clipboard = new ClipboardJS('.copybtn', {
-        text: function(a) {
-
+        text: function(a,e) {
             return  vm.$data.shareForm.share_copy_text;
         }
     });
@@ -360,6 +354,7 @@
     clipboard.on('error', function(e) {
        ErrMsg(e)
     });
+
 
 
 </script>
