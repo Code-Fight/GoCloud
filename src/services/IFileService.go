@@ -24,6 +24,7 @@ type IFileService interface {
 	QueryUserShareFileBy(share_id string) (share *datamodels.UserFileShareModel, err error)
 	QueryUserShareFiles(user_name string) (share []datamodels.UserFileShareModel, err error)
 	CancelShareFile(share_id string) (succ bool, err error)
+	QueryShareFileByUserFileId(user_file_id int64) (share *datamodels.FileShareModel, err error)
 }
 
 type fileService struct {
@@ -143,6 +144,12 @@ func (this *fileService)  CancelShareFile(share_id string) (succ bool, err error
 
 	return this.dao.DeleteShareFileByID(share_id)
 }
+
+func (this *fileService)  QueryShareFileByUserFileId(user_file_id int64) (share *datamodels.FileShareModel, err error){
+
+	return this.dao.SelectShareFileByUserFileId(user_file_id)
+}
+
 
 
 func createTree(tree *[]map[string]interface{},dirs []datamodels.UserFileModel,nodes  []datamodels.UserFileModel,ignoreNode int)  {

@@ -31,6 +31,7 @@ type IFileDao interface {
 	SelectShareFileAndUserFile(share_id string) (share *datamodels.UserFileShareModel, err error)
 	SelectUserShareFiles(user_name string) (share []datamodels.UserFileShareModel, err error)
 	DeleteShareFileByID(share_id string) (succ bool, err error)
+	SelectShareFileByUserFileId(user_file_id int64) (share *datamodels.FileShareModel, err error)
 }
 
 type fileDao struct {
@@ -505,4 +506,33 @@ func (this *fileDao) DeleteShareFileByID(share_id string) (succ bool, err error)
 	}
 
 	return true,nil
+}
+
+func (this *fileDao) SelectShareFileByUserFileId(user_file_id int64) (share *datamodels.FileShareModel, err error) {
+	if err = this.Conn(); err != nil {
+		return
+	}
+	stmt, err :=this.mysqlConn.Prepare("select * from  tbl_user_share_file" +
+		" where user_file_id=?")
+	if err != nil {
+		fmt.Println("Failed to prepare statement,err:" + err.Error())
+		return nil,err
+	}
+	defer stmt.Close()
+	row, err := stmt.Query(user_file_id)
+	if err != nil {
+		fmt.Println(err.Error())
+		return nil,err
+	}
+
+
+	result := common.GetResultRow(row)
+	if len(result) == 0 {
+		return nil, err
+	}
+
+	share =&datamodels.FileShareModel{}
+	common.DataToStructByTagSql(result,share)
+	return share,nil
+
 }

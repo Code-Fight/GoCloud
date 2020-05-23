@@ -38,6 +38,24 @@ func (this *ShareController)PostCreateshare()  {
 		return
 	}
 
+	sharefile,err:=this.Service.QueryShareFileByUserFileId(user_file_id)
+	if err!=nil{
+		this.Ctx.JSON(datamodels.RespModel{
+			Status: 0,
+			Msg:    err.Error(),
+		})
+		return
+	}
+
+	if sharefile!=nil{
+		this.Ctx.JSON(datamodels.RespModel{
+			Status: 0,
+			Msg:    "this file has been shared",
+		})
+		return
+	}
+
+
 
 	link,succ,err:=this.Service.CreateShareFile(user_file_id,share_time,share_pwd)
 	if !succ||err!=nil{

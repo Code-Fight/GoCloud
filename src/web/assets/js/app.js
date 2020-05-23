@@ -414,6 +414,10 @@ function GetShareFiles() {
     axios.get("/file/usersharefiles/"+username)
         .then(resp=>{
             if (resp.data.Status ==1){
+                if(!resp.data.Data){
+                    vm.$data.shareTableData=[]
+                    return
+                }
                 vm.$data.shareTableData = resp.data.Data
             }else {
                 ErrMsg(err)
@@ -449,19 +453,6 @@ function randomCode(){
     return idvalue;
 }
 
-//ref: https://www.jb51.net/article/53061.htm
-function string62to10(number_code) {
-    var chars = '0123456789abcdefghigklmnopqrstuvwxyzABCDEFGHIGKLMNOPQRSTUVWXYZ',
-        radix = chars.length,
-        number_code = String(number_code),
-        len = number_code.length,
-        i = 0,
-        origin_number = 0;
-    while (i < len) {
-        origin_number += Math.pow(radix, i++) * chars.indexOf(number_code.charAt(len - i) || 0);
-    }
-    return origin_number;
-}
 
 
 
