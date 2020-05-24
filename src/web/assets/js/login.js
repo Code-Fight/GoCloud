@@ -19,7 +19,7 @@ var vm =new Vue({
 
 
             var data= {"Username":user_name,"Email":eamil,"Userpwd":password}
-            axios.post('/login/Signup',data).
+            axios.post('/login/signup',data).
             then(function (response) {
                 if (response.data == 'OK'){
 
