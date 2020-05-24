@@ -442,3 +442,27 @@ func (this *FileController) GetUsersharefilesBy(user_name string){
 	})
 }
 
+func (this *FileController) GetUserrecyclefiles(){
+	sess := sessions.Get(this.Ctx)
+
+	user, ok := (sess.Get("user")).(*datamodels.UserModel)
+	if !ok {
+		this.Ctx.Application().Logger().Error("parse user err by sesssion")
+		return
+	}
+
+	userFiles,err:=this.Service.QueryUserFilsByStatus(user.Username,3)
+	if err != nil {
+		this.Ctx.JSON(datamodels.RespModel{
+			Status: 0,
+			Msg:    err.Error(),
+		})
+		return
+	}
+	this.Ctx.JSON(datamodels.RespModel{
+		Status: 1,
+		Msg:    "OK",
+		Data: userFiles,
+	})
+
+}

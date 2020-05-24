@@ -56,6 +56,8 @@ func AppRun() {
 	db := getDb()
 	registerHandler(app,db)
 
+	// file recycle for last_update > 30 days
+	go startFileRecycle()
 
 	// run web app
 	app.Listen(":8080",iris.WithOptimizations)
@@ -102,5 +104,17 @@ func registerHandler(app *iris.Application,db *sql.DB) {
 	share.Register(fileService)
 	share.Handle(new(controllers.ShareController))
 
+
+}
+
+func startFileRecycle() {
+	db := getDb()
+	fileDao :=dao.NewFileDao(db)
+	fileService :=services.NewFileService(fileDao)
+
+	for  {
+		fileService.DeleteRecyle()
+		time.Sleep(time.Minute)
+	}
 
 }

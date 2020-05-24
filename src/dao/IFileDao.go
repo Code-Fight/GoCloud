@@ -2,7 +2,6 @@ package dao
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"gocloud/common"
 	"gocloud/datamodels"
@@ -16,11 +15,12 @@ type IFileDao interface {
 	InsertFile(fileqetag string, filename string, filesize int64, fileaddr string) (succ bool,err error)
 	//table_user_file
 	SelectUserFiles(username string,parent_dir,status int64) (userfile []datamodels.UserFileModel, err error)
+	SelectUserFilesByStatus(username string,status int64) (userfile []datamodels.UserFileModel, err error)
 	SelectUserDirs(username string) (userfile []datamodels.UserFileModel, err error)
 	SelectUserFilesByQetag(username,fileqetag string,parent_dir,status int64) (userfile *datamodels.UserFileModel, err error)
 	SelectUserFilesByID(ID int64) (userfile *datamodels.UserFileModel, err error)
 	InsertUserFile(username, fileqetag, filename string, filesize,is_dir,parent_dir int64) (succ bool,err error)
-	DeleteUserFile(username, fileqetag string)(succ bool,err error)
+	DeleteUserFile()(succ bool,err error)
 	UpdateUserFileStatus(status,id int64)(succ bool,err error)
 	UpdateUserFileName(id int64,name string)(succ bool,err error)
 	UpdateUserFileParentDir(id ,parent_dir int64)(succ bool,err error)
@@ -137,6 +137,39 @@ func (this *fileDao) SelectUserFiles(username string,parent_dir,status int64) (u
 	return userfile, nil
 }
 
+func (this *fileDao) SelectUserFilesByStatus(username string,status int64) (userfile []datamodels.UserFileModel, err error) {
+	if err = this.Conn(); err != nil {
+		return
+	}
+	stmt, err := this.mysqlConn.Prepare(
+		"select id, file_qetag,file_name,file_size,upload_at," +
+			"last_update,is_dir,parent_dir  from tbl_user_file where user_name=?  and status=?")
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(username,status)
+	if err != nil {
+		return nil, err
+	}
+
+	result := common.GetResultRows(rows)
+	if len(result) == 0 {
+		return nil, err
+	}
+
+	for _,v :=range result{
+		temp :=&datamodels.UserFileModel{}
+
+		common.DataToStructByTagSql(v,temp)
+		userfile = append(userfile, *temp)
+	}
+
+	return userfile, nil
+}
+
+
 // InsertFile : 文件上传完成,保存meta
 func (this *fileDao) InsertFile(fileqetag string, filename string, filesize int64, fileaddr string) (succ bool,err error) {
 	if err = this.Conn(); err != nil {
@@ -163,9 +196,29 @@ func (this *fileDao) InsertFile(fileqetag string, filename string, filesize int6
 	return false,err
 }
 
-func (this *fileDao) DeleteUserFile(username, fileqetag string)(succ bool,err error){
+func (this *fileDao) DeleteUserFile()(succ bool,err error){
 
-	return false,errors.New("didn't impl")
+	if err = this.Conn(); err != nil {
+		return
+	}
+	stmt, err :=this.mysqlConn.Prepare("delete  from  tbl_user_file where id in  " +
+		" ( select id from( (select id from tbl_user_file where status =3 and TIMESTAMPDIFF(DAY, last_update, now())>30) )as sub)")
+	if err != nil {
+		fmt.Println("Failed to prepare statement,err:" + err.Error())
+		return false,err
+	}
+	defer stmt.Close()
+	_, err = stmt.Exec()
+	if err != nil {
+		fmt.Println(err.Error())
+		return false,err
+	}
+	if nil != err {
+		fmt.Println("delete file share has failed")
+		return false,err
+
+	}
+	return true,nil
 }
 
 func (this *fileDao) SelectUserFilesByQetag(username,fileqetag string,parent_dir,status int64) (userfile *datamodels.UserFileModel, err error){

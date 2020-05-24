@@ -46,7 +46,9 @@ var vm =new Vue({
         createShareButtonText:"创建链接",
         mainMenuIndex:1,
         shareTableData:[],
-        appHost:""
+        appHost:"",
+        recycleTableData:[],
+        recycleTableHeight:0,
 
     },
     methods: {
@@ -58,7 +60,7 @@ var vm =new Vue({
         getHeight(){
             this.tableheight=window.innerHeight-121.511+'px';  //获取浏览器高度减去顶部导航栏
             this.shareTableHeight=window.innerHeight-60.511+'px';  //获取浏览器高度减去顶部导航栏
-
+            this.recycleTableHeight = window.innerHeight-50.511+'px';
 
         },
         handleSelectionChange(val) {
@@ -88,6 +90,9 @@ var vm =new Vue({
             }).catch(function (err) {
                 console.log(err)
             })
+        },
+        recycel_table_expdate_formatter(row, column){
+            return diffTime( new Date(row.LastUpdated),new Date())
         },
         table_expdate_formatter(row, column){
             if (row.ShareTime==1){
@@ -169,7 +174,7 @@ var vm =new Vue({
             }else if(index==2){
                 GetShareFiles()
             }else if(index==3){
-
+                GetRecycleBinFiles()
             }
 
 
@@ -428,6 +433,64 @@ function GetShareFiles() {
         })
 
 }
+
+// get the recycle bin file
+function GetRecycleBinFiles() {
+    axios.get("/file/userrecyclefiles")
+        .then(resp=>{
+            if (resp.data.Status ==1){
+                if(!resp.data.Data){
+                    vm.$data.recycleTableData=[]
+                    return
+                }
+                vm.$data.recycleTableData = resp.data.Data
+            }else {
+                ErrMsg(err)
+            }
+        })
+        .catch(err=>{
+            ErrMsg(err)
+        })
+
+}
+
+//时间差计算
+/*
+* startDate==>开始时间
+* endDate==>结束时间
+* 事例：diffTime(data.createTime,new Date())
+*
+* */
+function diffTime(startDate,endDate) {
+    var diff=endDate.getTime() - startDate;//.getTime();//时间差的毫秒数
+
+    //计算出相差天数
+    var days=Math.floor(diff/(24*3600*1000));
+
+    //计算出小时数
+    var leave1=diff%(24*3600*1000);    //计算天数后剩余的毫秒数
+    var hours=Math.floor(leave1/(3600*1000));
+    //计算相差分钟数
+    var leave2=leave1%(3600*1000);        //计算小时数后剩余的毫秒数
+    var minutes=Math.floor(leave2/(60*1000));
+
+    //计算相差秒数
+    var leave3=leave2%(60*1000);      //计算分钟数后剩余的毫秒数
+    var seconds=Math.round(leave3/1000);
+
+    var returnStr = seconds + "秒";
+    if(minutes>0) {
+        returnStr = minutes + "分钟";//+ returnStr;
+    }
+    if(hours>0) {
+        returnStr = hours + "小时";// + returnStr;
+    }
+    if(days>0) {
+        returnStr = days + "天" ;//+ returnStr;
+    }
+    return returnStr;
+}
+
 
 
 function RightMenuDisplayNone() {

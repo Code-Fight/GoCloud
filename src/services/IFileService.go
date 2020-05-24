@@ -11,12 +11,15 @@ type IFileService interface {
 	GetFileMeta(fileqetag string) (file *datamodels.FileModel,err error)
 	AddFile(fileqetag string, filename string, filesize int64, fileaddr string) (succ bool,err error)
 	QueryUserFils(username string,parent_dir ,status int64) (userfile []datamodels.UserFileModel, err error)
+	QueryUserFilsByStatus(username string,status int64) (userfile []datamodels.UserFileModel, err error)
 	GetUserFileByID(id int64) (userfile *datamodels.UserFileModel, err error)
 	AddUserFileRelation(username, fileqetag, filename,fileaddr string, filesize ,is_dir,parent_dir int64) (succ bool,err error)
 	DeleteFile(username, fileqetag string,parent_id int64)(succ bool,err error)
 	UpdateUserFileName(id int64,name string)(succ bool,err error)
 	GetUserDirByUser(user_name string,ignoreNode int)(dirs *[]map[string]interface{},err error)
 	MoveFileTo(id, parent_dir int64) ( bool,  error)
+	DeleteRecyle() ( bool,  error)
+
 
 	CreateShareFile(user_file_id,share_id int64, pwd string)  (share_link string,succ bool, err error)
 	QueryShareFileBy(qetag string) (share *datamodels.FileShareModel, err error)
@@ -43,6 +46,9 @@ func (this *fileService) AddFile(fileqetag string, filename string, filesize int
 }
 func (this *fileService) QueryUserFils(username string,parent_dir ,status int64) (userfile []datamodels.UserFileModel, err error) {
 	return this.dao.SelectUserFiles(username,parent_dir,status)
+}
+func (this *fileService) QueryUserFilsByStatus(username string,status int64) (userfile []datamodels.UserFileModel, err error) {
+	return this.dao.SelectUserFilesByStatus(username,status)
 }
 
 func (this *fileService) GetUserFileByID(id int64) (userfile *datamodels.UserFileModel, err error){
@@ -95,6 +101,10 @@ func (this *fileService) GetUserDirByUser(user_name string,ignoreNode int)(dirs 
 
 func (this *fileService)  MoveFileTo(id, parent_dir int64) ( bool,  error) {
 	return this.dao.UpdateUserFileParentDir(id,parent_dir)
+}
+
+func (this *fileService)  DeleteRecyle() ( bool,  error) {
+	return this.dao.DeleteUserFile()
 }
 
 
