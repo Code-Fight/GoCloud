@@ -8,15 +8,17 @@
         <el-row type="flex">
 
             <el-col :span="16">
-                <img src="/assets/img/logo1.svg" width="170px" style="padding-top: 10px">
+                <a href="/"> <img  src="/assets/img/logo1.svg" width="170px" style="padding-top: 10px"></a>
+
 
             </el-col>
 
             <el-col style="text-align: right;line-height: 60px" :span="8">
-                <el-avatar style="margin-top: 12px;position: absolute;right: 80px;" :size="35"    src="/assets/img/t.png"></el-avatar>
-                <el-dropdown  @command="UserCommandHandler">
-                      <span class="el-dropdown-link" style="color: white;font-size: 18px">
 
+                <el-dropdown  @command="UserCommandHandler">
+
+                      <span class="el-dropdown-link" style="color: white;font-size: 18px">
+                        <el-avatar style="vertical-align: middle" :size="34"    src="/assets/img/t.png"></el-avatar>
                         {{.username}}<i class="el-icon-arrow-down el-icon--right"></i>
                       </span>
                     <el-dropdown-menu slot="dropdown">
@@ -114,8 +116,7 @@
 
 
             <el-table  key="shareTable"  :height="shareTableHeight" :data="shareTableData" style="width: 100%;font-size: 13px"
-                       :default-sort = "{prop: 'FileName', order: 'descending'}"
-            >
+                       :default-sort = "{prop: 'FileName', order: 'descending'}">
 
                 <el-table-column type="expand">
                     <template slot-scope="props">
@@ -157,7 +158,43 @@
 
         </el-main>
 
+        <!--file recycle bin-->
+        <el-main v-if="(mainMenuIndex==3)" style="padding: 0px;" >
 
+
+            <el-row style="padding-left: 10px">
+                <el-col :span="24" style="padding: 10px;font-size: 12px">
+                    <span style=";color: #8c939d">提示: 请注意，回收站内的文件会在30天后被彻底删除。</span>
+
+                </el-col>
+
+            </el-row>
+            <el-table  key="recycleTable"  :height="recycleTableHeight" :data="recycleTableData" style="width: 100%;font-size: 13px"
+                       :default-sort = "{prop: 'FileName', order: 'descending'}"
+            >
+
+
+
+                <el-table-column  prop="FileName" label="文件名">
+                    <template  slot-scope="temp">
+                        <i style="font-size: 22px;color: #3a8ee6;position: absolute" v-bind:class="[temp.row.IsDir ? 'el-icon-folder' : 'el-icon-document']"></i>
+                        <span  style="margin-left: 35px" >$temp.row.FileName$</span>
+                    </template>
+                </el-table-column>
+
+
+                <el-table-column  prop="LastUpdated" label="删除时间" width="300" :formatter="table_date_formatter">
+                </el-table-column>
+
+
+
+                <el-table-column  prop="LastUpdated" label="剩余时间" width="200" :formatter="recycel_table_expdate_formatter">
+                </el-table-column>
+
+
+            </el-table>
+
+        </el-main>
 
 
     </el-container>

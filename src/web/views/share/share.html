@@ -7,15 +7,16 @@
         <el-header style="text-align: left; font-size: 16px">
             <el-row type="flex">
                 <el-col :span="16">
-                    <img src="/assets/img/logo1.svg" width="170px" style="padding-top: 10px">
+                    <a href="/"> <img  src="/assets/img/logo1.svg" width="170px" style="padding-top: 10px"></a>
 
                 </el-col>
 
                 <el-col v-if="was_login()" style="text-align: right;line-height: 60px" :span="8">
-                    <el-avatar style="margin-top: 12px;position: absolute;right: 80px;" :size="35"    src="/assets/img/t.png"></el-avatar>
-                    <el-dropdown  @command="UserCommandHandler">
-                      <span class="el-dropdown-link" style="color: white;font-size: 18px">
 
+                    <el-dropdown  @command="UserCommandHandler" style="display: inline-block">
+
+                      <span class="el-dropdown-link" style="color: white;font-size: 18px">
+                        <el-avatar style="vertical-align: middle" :size="34"    src="/assets/img/t.png"></el-avatar>
                         {{.username}}<i class="el-icon-arrow-down el-icon--right"></i>
                       </span>
                         <el-dropdown-menu slot="dropdown">
