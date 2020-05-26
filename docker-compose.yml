@@ -1,6 +1,28 @@
 version: "3"
 services:
-  go-cloud:
+  gocloud:
     build: .
     ports: 
       - 8080:8080
+    container_name: "gocloud-app"
+    links:
+      - "db:database"
+    depends_on:
+      - db
+
+
+  db:
+    restart: always
+    image: "docker.io/mysql:5.7.30"
+    container_name: "gocloud-db"
+    command:
+      --lower_case_table_names=1
+      --init-file='/dbfile/init_db.sql'
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+
+    ports:
+      - 23306:3306
+    volumes:
+      - "./db:/dbfile/"

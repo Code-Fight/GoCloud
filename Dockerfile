@@ -13,8 +13,13 @@ COPY src .
 
 RUN go build -o /main ./cmd/main.go
 
+
 # running built service
 FROM alpine:3.9
+
+RUN apk add tzdata && cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+    && echo "Asia/Shanghai" > /etc/timezone \
+    && apk del tzdata
 
 COPY --from=builder /main .
 COPY --from=builder /app/web ./web
