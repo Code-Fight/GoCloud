@@ -15,12 +15,15 @@
 * [ ] 后端存储OSS(阿里云)、KODO(七牛云)、Ceph(私有分布式/aws)等
 
 ## 使用docker运行(docker-compose) 
+_推荐将/uploads 挂载到你的本地目录，来保存真实的文件_
+
 mac OS, Linux 在根目录下运行
 ```
 $ ./start.sh
 ```
 
-Windows 在根目录下运行
+Windows 推荐使用git bash 在根目录下运行
+如果失败，请手动运行
 ```
 $ start.sh
 ```
