@@ -43,7 +43,7 @@ go build cmd/main.go
 3.init database
 ```
 将 db 目录下的 init_db.sql 在您的mysql数据库下执行
-并修改host
-添加127.0.0.1 db
+并修改host添加
+127.0.0.1 db
 ```
 
