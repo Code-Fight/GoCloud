@@ -117,6 +117,7 @@ func (this *FileController) PostUploadfinshed() {
 		}
 
 		_, err = io.Copy(newFile, oldfile)
+		_ = oldfile.Close()
 		err = os.Remove(oldFilePath)
 		if err != nil {
 			_ = oldfile.Close()
@@ -124,7 +125,6 @@ func (this *FileController) PostUploadfinshed() {
 			this.Ctx.Application().Logger().Error("delete temp file error:" + err.Error())
 			return
 		}
-		_ = oldfile.Close()
 	}
 	_ = newFile.Close()
 
